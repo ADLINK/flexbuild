@@ -50,9 +50,8 @@ ls1088ardb, ls2088ardb, ls2160ardb, lx2162aqds, etc
 ```
 $ cd flexbuild
 $ . setup.env
-$ bld docker (create or attach a docker container)
-$ . setup.env
-$ bld -h
+$ bld uboot -m imx8mpevk
+$ bld -m imx8mpevk
 
 Usage: bld -m <machine>
    or  bld <target> [ <option> ]
