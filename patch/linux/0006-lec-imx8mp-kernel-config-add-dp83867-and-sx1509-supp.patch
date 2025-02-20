@@ -1,0 +1,20 @@
+From 25d573ba8f427273357e4fbd58605190fa7063b6 Mon Sep 17 00:00:00 2001
+From: santhana-kumar <santhana-kumar@adlink.com>
+Date: Thu, 2 Jan 2025 11:59:09 +0000
+Subject: [PATCH] lec-imx8mp: kernel config: add dp83867 and sx1509 support
+
+Signed-off-by: santhana-kumar <santhana-kumar@adlink.com>
+
+diff --git a/arch/arm64/configs/imx_v8_defconfig b/arch/arm64/configs/imx_v8_defconfig
+index a40bd6eddb4c..2c068eedd69d 100644
+--- a/arch/arm64/configs/imx_v8_defconfig
++++ b/arch/arm64/configs/imx_v8_defconfig
+@@ -1163,3 +1163,5 @@ CONFIG_CORESIGHT_STM=m
+ CONFIG_CORESIGHT_CPU_DEBUG=m
+ CONFIG_CORESIGHT_CTI=m
+ CONFIG_MEMTEST=y
++CONFIG_DP83867_PHY=y
++CONFIG_PINCTRL_SX150X=y
+-- 
+2.34.1
+

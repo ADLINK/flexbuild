@@ -1,0 +1,38 @@
+From cc2245f34c8118ad88c3e03202f7be1337bfaa60 Mon Sep 17 00:00:00 2001
+From: santhana-kumar <santhana-kumar@adlink.com>
+Date: Mon, 6 Jan 2025 15:50:27 +0530
+Subject: [PATCH] lec-imx8mp: fix led issue for stmmac
+
+Signed-off-by: santhana-kumar <santhana-kumar@adlink.com>
+
+diff --git a/drivers/net/phy/phy_device.c b/drivers/net/phy/phy_device.c
+index 2ce74593d6e4..3a0044791877 100644
+--- a/drivers/net/phy/phy_device.c
++++ b/drivers/net/phy/phy_device.c
+@@ -1796,6 +1796,7 @@ void phy_detach(struct phy_device *phydev)
+ 	struct net_device *dev = phydev->attached_dev;
+ 	struct module *ndev_owner = NULL;
+ 	struct mii_bus *bus;
++	const char *driver;
+ 
+ 	if (phydev->devlink)
+ 		device_link_del(phydev->devlink);
+@@ -1831,9 +1832,15 @@ void phy_detach(struct phy_device *phydev)
+ 	    phy_driver_is_genphy_10g(phydev))
+ 		device_release_driver(&phydev->mdio.dev);
+ 
++	driver = dev_name(&phydev->mdio.dev);
++	if(driver && strncmp (driver, "stmmac", 6) == 0)
++		goto skip_phy_reset;
++
+ 	/* Assert the reset signal */
+ 	phy_device_reset(phydev, 1);
+ 
++skip_phy_reset:
++
+ 	/*
+ 	 * The phydev might go away on the put_device() below, so avoid
+ 	 * a use-after-free bug by reading the underlying bus first.
+-- 
+2.34.1
+

@@ -42,6 +42,8 @@ define build-uboot-target
 	unset PKG_CONFIG_SYSROOT_DIR && \
 	\
 	sed -i 's/CONFIG_SYS_BOOTM_LEN=0x2000000/CONFIG_SYS_BOOTM_LEN=0x4000000/' $(BSPDIR)/uboot/configs/imx* && \
+	sed -i 's/CONFIG_SYS_BOOTM_LEN=0x2000000/CONFIG_SYS_BOOTM_LEN=0x4000000/' $(BSPDIR)/uboot/configs/adlink* && \
+	sed -i "s/CONFIG_LPDDR4_.*GB/CONFIG_LPDDR4_$(MODULE_MEM_SIZE)/" $(BSPDIR)/uboot/configs/adlink_lec8mp_defconfig && \
 	$(call fbprint_n,"config = $1") && \
 	$(MAKE) -C $(BSPDIR)/uboot -j$(JOBS) O=$$opdir $1 && \
 	$(MAKE) -C $(BSPDIR)/uboot -j$(JOBS) O=$$opdir && \
@@ -72,7 +74,7 @@ define build-uboot-target
 	if echo $1 | grep -q ^ls1021a && [ ! -d $(FBOUTDIR)/bsp/rcw/$(MACHINE) ]; then \
 	    bld rcw -m $(MACHINE) -f $(CFGLISTYML); \
 	fi && \
-	if echo $1 | grep -qE '^imx8|^imx9'; then \
+	if echo $1 | grep -qE '^imx8|^imx9|^adlink'; then \
 	    bld atf -m $(MACHINE) -b sd -f $(CFGLISTYML) && \
 	    $(call imx_mkimage_target, $1) \
 	elif echo $1 | grep -qiE "mx6|mx7"; then \
