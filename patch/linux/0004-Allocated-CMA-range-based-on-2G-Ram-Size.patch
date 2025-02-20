@@ -1,0 +1,32 @@
+From 2789916a9c718a00f73e8fadb415da79aa7f1012 Mon Sep 17 00:00:00 2001
+From: santhana-kumar <santhana-kumar@adlink.com>
+Date: Thu, 9 Jan 2025 18:46:06 +0530
+Subject: [PATCH] Allocated CMA range based on 2G Ram Size
+
+Signed-off-by: santhana-kumar <santhana-kumar@adlink.com>
+
+diff --git a/arch/arm64/boot/dts/freescale/imx8mp.dtsi b/arch/arm64/boot/dts/freescale/imx8mp.dtsi
+index 108ef142b724..720565a50363 100644
+--- a/arch/arm64/boot/dts/freescale/imx8mp.dtsi
++++ b/arch/arm64/boot/dts/freescale/imx8mp.dtsi
+@@ -218,14 +218,14 @@ ocram: ocram@900000 {
+ 		linux,cma {
+ 			compatible = "shared-dma-pool";
+ 			reusable;
+-			size = <0 0x3c000000>;
+-			alloc-ranges = <0 0x40000000 0 0xC0000000>;
++			size = <0 0x20000000>;
++			alloc-ranges = <0 0x40000000 0 0xB0000000>;
+ 			linux,cma-default;
+ 		};
+ 
+ 		gpu_reserved: gpu_reserved@100000000 {
+ 			no-map;
+-			reg = <0x1 0x00000000 0 0x10000000>;
++			reg = <0x0 0xB0000000 0 0x10000000>;
+ 		};
+ 
+ 		dsp_reserved: dsp@92400000 {
+-- 
+2.34.1
+

@@ -1,0 +1,23 @@
+From 12ca490a2b84e9af9f56a076e6f9060eb1da7357 Mon Sep 17 00:00:00 2001
+From: santhana-kumar <santhana-kumar@adlink.com>
+Date: Thu, 2 Jan 2025 11:43:45 +0000
+Subject: [PATCH] lec-imx8mp: change uart port to UART3
+
+Signed-off-by: santhana-kumar <santhana-kumar@adlink.com>
+
+diff --git a/plat/imx/imx8m/imx8mp/platform.mk b/plat/imx/imx8m/imx8mp/platform.mk
+index b473e547f..238117741 100644
+--- a/plat/imx/imx8m/imx8mp/platform.mk
++++ b/plat/imx/imx8m/imx8mp/platform.mk
+@@ -155,7 +155,7 @@ $(eval $(call add_define,BL32_BASE))
+ BL32_SIZE		?=	0x2000000
+ $(eval $(call add_define,BL32_SIZE))
+ 
+-IMX_BOOT_UART_BASE	?=	0x30890000
++IMX_BOOT_UART_BASE	?=	0x30880000
+ $(eval $(call add_define,IMX_BOOT_UART_BASE))
+ 
+ EL3_EXCEPTION_HANDLING := $(SDEI_SUPPORT)
+-- 
+2.34.1
+

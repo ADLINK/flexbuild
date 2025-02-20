@@ -12,7 +12,11 @@ atf:
 	 $(call repo-mngr,fetch,mbedtls,bsp) && \
 	 if [ "$(MACHINE)" = all ]; then $(call fbprint_w,"Please specify '-m <machine>'") && exit 0; fi && \
 	 if [ -z "$(BOOTTYPE)" ]; then $(call fbprint_w,"Please specify '-b <boottype>'") && exit 0; fi && \
+	 if [ "$(MACHINE)" = sp2imx8mp -o "$(MACHINE)" = lecimx8mp ]; then MACHINE=imx8mp; fi && \
 	 cd $(BSPDIR)/atf && \
+	 if [ -d $(FBDIR)/patch/atf ] && [ ! -f .patchdone ]; then \
+	     git am $(FBDIR)/patch/atf/*.patch && touch .patchdone; \
+	 fi && \
 	 curbrch=`git branch | grep ^* | cut -d' ' -f2` && \
 	 $(call fbprint_n,"Building ATF $$curbrch" for $(MACHINE)) && \
 	 $(MAKE) realclean && mkdir -p $(FBOUTDIR)/bsp/atf/$(MACHINE); \
