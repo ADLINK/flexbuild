@@ -55,6 +55,11 @@ config SOC_IMX95_15X15_FRDM
 	help
 	  imx95-15x15-frdm board
 
+config SOC_LEC_IMX95
+        bool "LEC-IMX95 Custom Board"
+        help
+          lec-imx95 board
+
 config SOC_IMX95_19X19_EVK
 	bool "i.MX 95 19x19 EVK Board (B0 silicon revision)"
 	help
