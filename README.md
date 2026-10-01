@@ -19,7 +19,7 @@ target storage devices (SD/eMMC card or USB/SATA disk) on NXP boards or host mac
 ----------------------
 - __iMX platform__:  
 imx8mmevk, imx8mpevk, imx8mpfrdm, imx8qmmek, imx91evk, imx91frdm, imx91sfrdm, imx93evk,
-imx93frdm, imx95-15x15-frdm, imx95-15x15-evk, imx95-19x19-frdm-pro, imx95-19x19-evk
+imx93frdm, imx95-15x15-frdm, imx95-15x15-evk, imx95-19x19-frdm-pro, imx95-19x19-evk, lec-imx95
 
 - __Layerscape platform__:  
 ls1028ardb, ls1043ardb, ls1046ardb, lx2160ardb
@@ -32,7 +32,7 @@ Build all images in 3 steps:
 ```
 $ cd flexbuild
 $ make docker                                    # Step 1: Create or attach to Docker build container
-$ make menuconfig (or make <machine>_defconfig)  # Step 2: Select target machine and applications (if needed)
+$ make menuconfig (or make <machine>_defconfig)  # Step 2: Select target machine and applications
 $ make all                                       # Step 3: Build all required images (bootloader + kernel  + rootfs)
 ```
 
