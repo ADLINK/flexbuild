@@ -1,27 +1,21 @@
 #
-# Copyright 2017-2023 NXP
+# Copyright 2017-2023,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 
 # RCW for NXP QorIQ Layerscape SoC.
 
+RCW_MACHINE := $(if $(filter y,$(CONFIG_SOC_LX2160ARDB)),$(MACHINE)_rev2,$(MACHINE))
+RCW_INST_DIR   := $(FBOUTDIR)/bsp/rcw
+
+.PHONY: rcw
 rcw:
-	@[ $(SOCFAMILY) != LS ] && exit || \
-	 $(call repo-mngr,fetch,rcw,bsp) && \
-	 cd $(BSPDIR) && mkdir -p $(FBOUTDIR)/bsp/rcw
-ifeq ($(MACHINE), all)
-	@cd $(BSPDIR) && \
-	 for brd in `find rcw -maxdepth 1 -type d -name "l*"|cut -d/ -f2`; do \
-	     test -f rcw/$$brd/Makefile || continue; \
-	     $(MAKE) -C rcw/$$brd && \
-	     $(MAKE) -C rcw/$$brd install DESTDIR=$(FBOUTDIR)/bsp/rcw/$$brd; \
-	 done
-else
-	@cd $(BSPDIR) && \
-	 [ $${MACHINE:0:6} = lx2160 ] && machine=$${MACHINE:0:10}_rev2 || machine=$(MACHINE) && \
-	 $(MAKE) -C rcw/$$machine && \
-	 $(MAKE) -C rcw/$$machine install DESTDIR=$(FBOUTDIR)/bsp/rcw/$(MACHINE)
-endif
-	@rm -f $(FBOUTDIR)/bsp/rcw/*/README && \
+	@$(call download_repo,rcw,bsp)
+	$(call patch_apply,rcw,bsp)
+	$(call fbprint_b,"RCW for $(MACHINE)")
+	mkdir -p $(RCW_INST_DIR)
+	$(MAKE) -C $(BSPDIR)/rcw/$(RCW_MACHINE) $(LOG_MUTE)
+	$(MAKE) -C $(BSPDIR)/rcw/$(RCW_MACHINE) install DESTDIR=$(RCW_INST_DIR)/$(MACHINE) $(LOG_MUTE)
+	rm -f $(RCW_INST_DIR)/*/README
 	$(call fbprint_d,"RCW")

@@ -1,0 +1,118 @@
+From 5157310a9870fd3a0e8787a7e808e028335cfea8 Mon Sep 17 00:00:00 2001
+From: Aravindlal <aravindlal.mh@adlinktech.com>
+Date: Mon, 21 Sep 2026 11:02:55 +0530
+Subject: [PATCH] Add mclk support and modify realtek phy reg
+
+---
+ linux/drivers/net/phy/realtek.c      | 13 +++++++++++++
+ linux/sound/soc/codecs/tlv320aic3x.c | 24 ++++++++++++++++++++++--
+ 2 files changed, 35 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/phy/realtek.c b/drivers/net/phy/realtek.c
+index 0b632ed7f..dfb72843e 100644
+--- a/drivers/net/phy/realtek.c
++++ b/drivers/net/phy/realtek.c
+@@ -109,6 +109,7 @@ struct rtl821x_priv {
+ 	u16 phycr1;
+ 	u16 phycr2;
+ 	struct clk *clk;
++	u32 led_vals[2];
+ };
+ 
+ static int rtl821x_read_page(struct phy_device *phydev)
+@@ -147,6 +148,12 @@ static int rtl821x_probe(struct phy_device *phydev)
+ 		priv->phycr1 |= RTL8211F_ALDPS_PLL_OFF | RTL8211F_ALDPS_ENABLE | RTL8211F_ALDPS_XTAL_OFF;
+ 
+ 	disable_clk_out = of_property_read_bool(dev->of_node, "realtek,clkout-disable");
++
++	priv->led_vals[0] = 0;
++	priv->led_vals[1] = 0;
++
++	of_property_read_u32_array(dev->of_node, "adlink,led" , priv->led_vals, 2);
++
+ 	if (phy_id == RTL_8211FVD_PHYID) {
+ 		ret = phy_read_paged(phydev, 0xd05, RTL8211FVD_PHYCR2);
+ 		if (ret < 0)
+@@ -462,6 +469,9 @@ static int rtl8211f_config_init(struct phy_device *phydev)
+ 		return ret;
+ 	}
+ 
++	if((priv->led_vals[0]!=0)&&(priv->led_vals[0]!=0))
++		phy_modify_paged_changed(phydev, 0xd04, 0x10, priv->led_vals[0],priv->led_vals[1]);
++
+ 	return genphy_soft_reset(phydev);
+ }
+ 
+@@ -496,6 +506,9 @@ static int rtl821x_resume(struct phy_device *phydev)
+ 
+ 	msleep(20);
+ 
++	rtl8211f_config_init(phydev);
++	rtl8211f_config_intr(phydev);
++	
+ 	return 0;
+ }
+ 
+diff --git a/sound/soc/codecs/tlv320aic3x.c b/sound/soc/codecs/tlv320aic3x.c
+index 56e795a00..c9d8d424e 100644
+--- a/sound/soc/codecs/tlv320aic3x.c
++++ b/sound/soc/codecs/tlv320aic3x.c
+@@ -45,7 +45,7 @@
+ #include <sound/soc.h>
+ #include <sound/initval.h>
+ #include <sound/tlv.h>
+-
++#include <linux/clk.h>
+ #include "tlv320aic3x.h"
+ 
+ #define AIC3X_NUM_SUPPLIES	4
+@@ -88,6 +88,7 @@ struct aic3x_priv {
+ 	enum aic3x_micbias_voltage micbias_vg;
+ 	/* Output Common-Mode Voltage */
+ 	u8 ocmv;
++	struct clk *mclk;
+ };
+ 
+ static const struct reg_default aic3x_reg[] = {
+@@ -1831,10 +1832,28 @@ int aic3x_probe(struct device *dev, struct regmap *regmap, kernel_ulong_t driver
+ 		if (ret != 0)
+ 			dev_err(dev, "Failed to init class D: %d\n", ret);
+ 	}
++	
++	aic3x->mclk = devm_clk_get(dev, "mclk");
++	if (IS_ERR(aic3x->mclk)) {
++        	aic3x->mclk = NULL;
++        	dev_err(dev, "mclk missing or invalid\n");
++	}
++	else
++	{
++		ret = clk_prepare_enable(aic3x->mclk);
++		if (ret < 0) {
++		dev_err(dev, "Failed to enable mclk\n");
++		}
++	}
+ 
+ 	ret = devm_snd_soc_register_component(dev, &soc_component_dev_aic3x, &aic3x_dai, 1);
+ 	if (ret)
++	{
++		if(aic3x->mclk)
++		clk_disable_unprepare(aic3x->mclk);
++
+ 		return ret;
++	}
+ 
+ 	return 0;
+ }
+@@ -1843,7 +1862,8 @@ EXPORT_SYMBOL(aic3x_probe);
+ void aic3x_remove(struct device *dev)
+ {
+ 	struct aic3x_priv *aic3x = dev_get_drvdata(dev);
+-
++	if(aic3x->mclk)
++	clk_disable_unprepare(aic3x->mclk);
+ 	/* Leave the codec in reset state */
+ 	if (aic3x->gpio_reset && !aic3x->shared_reset)
+ 		gpiod_set_value(aic3x->gpio_reset, 1);
+-- 
+2.47.3
+

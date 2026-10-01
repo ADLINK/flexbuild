@@ -1,21 +1,28 @@
-# Copyright 2017-2023 NXP
+# Copyright 2017-2024,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 
 
 wayland_protocols:
-	@[ $(DESTARCH) != arm64 -o $(DISTROVARIANT) != desktop -a $(MACHINE) != imx93evk ] && exit || \
-	 $(call fbprint_b,"wayland_protocols") && \
-	 $(call repo-mngr,fetch,wayland_protocols,apps/graphics) && \
-	 cd $(GRAPHICSDIR)/wayland_protocols && \
-	 sed -e 's%@TARGET_CROSS@%$(CROSS_COMPILE)%g' -e 's%@STAGING_DIR@%$(RFSDIR)%g' \
-	     -e 's%@DESTDIR@%$(DESTDIR)%g' $(FBDIR)/src/misc/meson/meson.cross > meson.cross && \
-	 meson setup build_$(DISTROTYPE)_$(ARCH) \
+	@$(call download_repo,wayland_protocols,apps/graphics)
+	$(call patch_apply,wayland_protocols,apps/graphics)
+	$(call fbprint_b,"wayland_protocols")
+	cd $(GRAPHICSDIR)/wayland_protocols
+	rm -rf build_$(DISTROTYPE)_$(ARCH)
+	sed -e 's%@TARGET_CROSS@%$(CROSS_COMPILE)%g' -e 's%@STAGING_DIR@%$(RFSDIR)%g' \
+	     -e 's%@DESTDIR@%$(DESTDIR)%g' $(FBDIR)/src/system/meson.cross > meson.cross
+	sed 's%@STAGING_DIR@%$(FBDIR)%g' $(FBDIR)/src/system/meson.native > meson.native
+	meson setup build_$(DISTROTYPE)_$(ARCH) \
 		-Dtests=false \
 		-Dc_link_args="-L$(DESTDIR)/usr/local/lib -L$(RFSDIR)/lib/aarch64-linux-gnu" \
 		--prefix=/usr \
 		--buildtype=release \
-		--cross-file meson.cross && \
-	 DESTDIR=$(DESTDIR) ninja -j $(JOBS) -C build_$(DISTROTYPE)_$(ARCH) install && \
-	 $(call fbprint_d,"wayland_protocols")
+		--native-file=meson.native \
+		--cross-file meson.cross $(LOG_MUTE)
+	DESTDIR=$(RFSDIR) ninja -C build_$(DISTROTYPE)_$(ARCH) install $(LOG_MUTE)
+	DESTDIR=$(DESTDIR) ninja -C build_$(DISTROTYPE)_$(ARCH) install $(LOG_MUTE)
+	mkdir -p $(RFSDIR)/usr/share/pkgconfig/
+	cp -af $(DESTDIR)/usr/share/pkgconfig/wayland-protocols.pc $(RFSDIR)/usr/share/pkgconfig/
+	cp -af $(DESTDIR)/usr/share/wayland-protocols $(RFSDIR)/usr/share/
+	$(call fbprint_d,"wayland_protocols")

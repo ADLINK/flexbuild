@@ -1,0 +1,38 @@
+# Copyright 2024,2026 NXP
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+# Smart Fitness application on i.MX
+
+# DEPENDS: glib-2.0 gstreamer1.0 nnstreamer cairo
+
+
+IMX_SMART_FITNESS_DIR = $(GPNT_APPS_FOLDER)/scripts/machine_learning/imx_smart_fitness
+
+#imx_smart_fitness:
+imx_smart_fitness: nnstreamer
+	@$(call download_repo,imx_smart_fitness,apps/gopoint)
+	 $(call patch_apply,imx_smart_fitness,apps/gopoint)
+	 $(call fbprint_b,"imx_smart_fitness")
+	 mkdir -p $(RFSDIR)/usr/include/ $(RFSDIR)/usr/lib/pkgconfig/ $(RFSDIR)/usr/lib/
+	 cp -af $(DESTDIR)/usr/include/nnstreamer $(RFSDIR)/usr/include/
+	 cp -af $(DESTDIR)/usr/lib/pkgconfig/gstreamer-* $(RFSDIR)/usr/lib/pkgconfig/
+	 cp -af $(DESTDIR)/usr/lib/libgst* $(RFSDIR)/usr/lib/
+	 cd $(GPDIR)/imx_smart_fitness
+	 export CC="$(CROSS_COMPILE)gcc --sysroot=$(RFSDIR)"
+	 export CXX="$(CROSS_COMPILE)g++ --sysroot=$(RFSDIR)"
+	 export PKG_CONFIG_LIBDIR=$(RFSDIR)/usr/lib/pkgconfig
+	 export PKG_CONFIG_PATH="$(RFSDIR)/usr/lib/pkgconfig:$(RFSDIR)/usr/share/pkgconfig:$(RFSDIR)/usr/lib/aarch64-linux-gnu/pkgconfig"
+	 rm -rf build_$(DISTROTYPE)_$(ARCH)
+	 cmake  -S $(GPDIR)/imx_smart_fitness \
+		-B build_$(DISTROTYPE)_$(ARCH) \
+		-DCMAKE_CXX_FLAGS="-I$(DESTDIR)/usr/include -I$(RFSDIR)/usr/include" \
+		-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+		-DLIBRARY_PATH=$(RFSDIR)/usr/lib \
+		-DCMAKE_BUILD_TYPE=release $(LOG_MUTE)
+	 cmake --build build_$(DISTROTYPE)_$(ARCH) --target all $(LOG_MUTE)
+	 cmake --install build_$(DISTROTYPE)_$(ARCH) --prefix /usr $(LOG_MUTE)
+	 $(CROSS_COMPILE)strip --remove-section=.comment --remove-section=.note --strip-unneeded \
+	 build_$(DISTROTYPE)_$(ARCH)/src/imx-smart-fitness
+	 install -m 0755 build_$(DISTROTYPE)_$(ARCH)/src/imx-smart-fitness $(DESTDIR)/$(IMX_SMART_FITNESS_DIR)
+	 $(call fbprint_d,"imx_smart_fitness")

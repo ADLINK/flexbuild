@@ -1,4 +1,4 @@
-# Copyright 2024 NXP
+# Copyright 2024,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -10,20 +10,17 @@
 
 
 apitrace:
-ifeq ($(CONFIG_APITRACE),y)
-	@[ $(DISTROVARIANT) != desktop ] && exit || \
-	 $(call fbprint_b,"apitrace") && \
-	 $(call repo-mngr,fetch,apitrace,apps/graphics) && \
-	 cd $(GRAPHICSDIR)/apitrace && \
-	 if [ ! -f .patchdone ]; then \
-	     git am $(FBDIR)/patch/apitrace/*.patch && touch .patchdone; \
-	 fi && \
-	 cp -f $(FBDIR)/patch/apitrace/libproc2.pc $(DESTDIR)/usr/lib/pkgconfig && \
-	 export CC="$(CROSS_COMPILE)gcc -march=armv8-a+crc+crypto -mbranch-protection=standard --sysroot=$(RFSDIR)" && \
-	 export CXX="$(CROSS_COMPILE)g++ -march=armv8-a+crc+crypto -mbranch-protection=standard --sysroot=$(RFSDIR)" && \
-	 export PKG_CONFIG_SYSROOT_DIR=$(RFSDIR) && \
-	 export PKG_CONFIG_PATH=$(RFSDIR)/usr/lib/aarch64-linux-gnu/pkgconfig:$(RFSDIR)/usr/share/pkgconfig:$(DESTDIR)/usr/lib/pkgconfig && \
-	 mkdir -p build_$(DISTROTYPE)_$(ARCH) && \
+	@$(call fbprint_b,"apitrace")
+	 $(call download_repo,apitrace,apps/graphics)
+	 $(call patch_apply,apitrace,apps/graphics)
+	 cd $(GRAPHICSDIR)/apitrace
+	 mkdir -p $(DESTDIR)/usr/lib/pkgconfig
+	 cp -f $(FBDIR)/src/system/pkgconfig/libproc2.pc $(DESTDIR)/usr/lib/pkgconfig/
+	 export CC="$(CROSS_COMPILE)gcc -march=armv8-a+crc+crypto -mbranch-protection=standard --sysroot=$(RFSDIR)"
+	 export CXX="$(CROSS_COMPILE)g++ -march=armv8-a+crc+crypto -mbranch-protection=standard --sysroot=$(RFSDIR)"
+	 export PKG_CONFIG_SYSROOT_DIR=$(RFSDIR)
+	 export PKG_CONFIG_PATH=$(RFSDIR)/usr/lib/aarch64-linux-gnu/pkgconfig:$(RFSDIR)/usr/share/pkgconfig:$(DESTDIR)/usr/lib/pkgconfig
+	 mkdir -p build_$(DISTROTYPE)_$(ARCH)
 	 cmake  -S $(GRAPHICSDIR)/apitrace \
 		-B $(GRAPHICSDIR)/apitrace/build_$(DISTROTYPE)_$(ARCH) \
 		-DCMAKE_INSTALL_PREFIX:PATH=/usr \
@@ -39,7 +36,6 @@ ifeq ($(CONFIG_APITRACE),y)
 		-DENABLE_X11=OFF \
 		-DVivante_INC_SEARCH_PATH=$(RFSDIR)/usr/include \
 		-DVivante_LIB_SEARCH_PATH=$(RFSDIR)/usr/lib \
-		-DCMAKE_BUILD_TYPE=release && \
-	 VERBOSE=1 cmake --build $(GRAPHICSDIR)/apitrace/build_$(DISTROTYPE)_$(ARCH) --target install && \
+		-DCMAKE_BUILD_TYPE=release $(LOG_MUTE)
+	 VERBOSE=1 cmake --build $(GRAPHICSDIR)/apitrace/build_$(DISTROTYPE)_$(ARCH) --target install $(LOG_MUTE)
 	 $(call fbprint_d,"apitrace")
-endif

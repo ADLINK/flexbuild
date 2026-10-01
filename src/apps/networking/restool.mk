@@ -1,14 +1,15 @@
-# Copyright 2017-2023 NXP
+# Copyright 2017-2023,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 # DPAA2 Resource Manager Tool
 
 restool:
-	@[ $(DESTARCH) != arm64 -o $(SOCFAMILY) != LS ] && exit || \
-	 $(call repo-mngr,fetch,restool,apps/networking) && \
-	 cd $(NETDIR)/restool && \
-	 $(MAKE) clean && \
-	 $(MAKE) -j$(JOBS) && \
-	 $(MAKE) -j$(JOBS) install && \
+	@$(call download_repo,restool,apps/networking)
+	 $(call patch_apply,restool,apps/networking)
+	 $(call fbprint_b,"restool")
+	 cd $(NETDIR)/restool
+	 $(MAKE) clean $(LOG_MUTE)
+	 $(MAKE) $(LOG_MUTE)
+	 $(MAKE) install $(LOG_MUTE)
 	 $(call fbprint_d,"restool")

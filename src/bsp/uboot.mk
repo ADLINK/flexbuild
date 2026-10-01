@@ -1,84 +1,39 @@
 #
-# Copyright 2017-2024 NXP
+# Copyright 2017-2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 # build U-Boot image for Layerscape and i.MX platforms
 
-include imx_mkimage.mk
 
+
+UBOOT_CONFIG_CLEAN := $(subst ",,$(UBOOT_CONFIG))
+UBOOT_CONFIG_1 := $(word 1,$(UBOOT_CONFIG_CLEAN))
+UBOOT_CONFIG_2 := $(word 2,$(UBOOT_CONFIG_CLEAN))
+
+ifeq ($(CONFIG_SECURE_BOOT),y)
+    uboot_cfg := $(UBOOT_CONFIG_2)
+	UBOOT_SECOPT := [secure boot]
+else
+    uboot_cfg := $(UBOOT_CONFIG_1)
+	UBOOT_SECOPT :=
+endif
+
+
+.PHONY: uboot u-boot dl-uboot
+dl-uboot:
+	@$(call download_repo,uboot,bsp)
+	$(call patch_apply,uboot,bsp)
+	$(call FB_OUT,u-boot source: $(PKGDIR)/bsp/uboot)
 
 uboot u-boot:
-	@$(call repo-mngr,fetch,uboot,bsp) && \
-	 curbrch=`cd $(BSPDIR)/uboot && git branch | grep ^* | cut -d' ' -f2` && \
-	 $(call fbprint_n,"Building u-boot $$curbrch for $(MACHINE)") && \
-	 cd $(BSPDIR)/uboot && \
-	 if [ -d $(FBDIR)/patch/uboot ] && [ ! -f .patchdone ]; then \
-	     git am $(FBDIR)/patch/uboot/*.patch && touch .patchdone; \
-	 fi && \
-	 if [ "$(BOOTTYPE)" = tfa -a "$(COT)" = arm-cot-with-verified-boot ]; then \
-	     uboot_cfg=$(MACHINE)_tfa_verified_boot_defconfig; \
-	 elif [ -n "$(UBOOT_CONFIG)" ]; then \
-	     uboot_cfg="$(UBOOT_CONFIG)"; \
-	 elif [ "$(BOOTTYPE)" = tfa -a "$(SECURE)" = y ]; then \
-	     uboot_cfg=$(MACHINE)_tfa_SECURE_BOOT_defconfig; \
-	 elif [ "$(BOOTTYPE)" = tfa ]; then \
-	     uboot_cfg=$(MACHINE)_tfa_defconfig; \
-	 fi; \
-	 for cfg in $$uboot_cfg; do \
-	     $(call build-uboot-target,$$cfg) \
-	 done
-
-
-
-define build-uboot-target
-	if echo $1 | grep -qE 'ls1021a|^mx'; then \
-	    export ARCH=arm && export CROSS_COMPILE=arm-linux-gnueabihf-; \
-	else \
-	    export ARCH=arm64 && export CROSS_COMPILE=aarch64-linux-gnu-; \
-	fi && \
-	if [ $(MACHINE) != all ]; then brd=$(MACHINE); fi && \
-	opdir=$(FBOUTDIR)/bsp/u-boot/$$brd/output/$1 && mkdir -p $$opdir && \
-	unset PKG_CONFIG_SYSROOT_DIR && \
-	\
-	sed -i 's/CONFIG_SYS_BOOTM_LEN=0x2000000/CONFIG_SYS_BOOTM_LEN=0x4000000/' $(BSPDIR)/uboot/configs/imx* && \
-	$(call fbprint_n,"config = $1") && \
-	$(MAKE) -C $(BSPDIR)/uboot -j$(JOBS) O=$$opdir $1 && \
-	$(MAKE) -C $(BSPDIR)/uboot -j$(JOBS) O=$$opdir && \
-	\
-	if echo $1 | grep -iqE 'sdcard|nand'; then \
-	   [ -f $$opdir/u-boot-with-spl-pbl.bin ] && srcbin=u-boot-with-spl-pbl.bin || srcbin=u-boot-with-spl.bin; \
-	   if echo $1 | grep -iqE 'SECURE_BOOT'; then \
-		if echo $1 | grep -iqE 'sdcard'; then \
-		   cp $$opdir/spl/u-boot-spl.bin $(FBOUTDIR)/bsp/u-boot/$$brd/uboot_$${brd}_sdcard_spl.bin ; \
-		   cp $$opdir/u-boot-dtb.bin $(FBOUTDIR)/bsp/u-boot/$$brd/uboot_$${brd}_sdcard_dtb.bin ; \
-		elif echo $1 | grep -iqE 'nand'; then \
-		   cp $$opdir/spl/u-boot-spl.bin $(FBOUTDIR)/bsp/u-boot/$$brd/uboot_$${brd}_nand_spl.bin ; \
-		   cp $$opdir/u-boot-dtb.bin $(FBOUTDIR)/bsp/u-boot/$$brd/uboot_$${brd}_nand_dtb.bin ; \
-		fi; \
-	   fi; \
-	   tgtbin=uboot_`echo $1|sed -r 's/(.*)(_.*)/\1/'`.bin; \
-	elif echo $1 | grep -iqE 'verified_boot'; then \
-	    mkdir -p $(FBOUTDIR)/bsp/atf/$$brd; \
-	    cat $$opdir/u-boot-nodtb.bin $$opdir/u-boot.dtb > $$opdir/u-boot-combined-dtb.bin; \
-	    cp -f $$opdir/u-boot-nodtb.bin $$opdir/u-boot.dtb $$opdir/u-boot-combined-dtb.bin $(FBOUTDIR)/bsp/atf/$$brd/; \
-	    cp -f $$opdir/u-boot.dtb $$opdir/tools/mkimage $(BSPDIR)/atf/; \
-	    srcbin=u-boot-combined-dtb.bin; \
-	else \
-	    srcbin=u-boot.bin; \
-	    tgtbin=uboot_`echo $1|sed -r 's/(.*)(_.*)/\1/'`.bin; \
-	fi;  \
-	\
-	if echo $1 | grep -q ^ls1021a && [ ! -d $(FBOUTDIR)/bsp/rcw/$(MACHINE) ]; then \
-	    bld rcw -m $(MACHINE) -f $(CFGLISTYML); \
-	fi && \
-	if echo $1 | grep -qE '^imx8|^imx9'; then \
-	    bld atf -m $(MACHINE) -b sd -f $(CFGLISTYML) && \
-	    $(call imx_mkimage_target, $1) \
-	elif echo $1 | grep -qiE "mx6|mx7"; then \
-	    cp $$opdir/u-boot-dtb.imx $(FBOUTDIR)/bsp/u-boot/$$brd/; \
-	else \
-	    cp $$opdir/$$srcbin $(FBOUTDIR)/bsp/u-boot/$$brd/$$tgtbin ; \
-	fi && \
-	$(call fbprint_d,"u-boot for $$brd in $(FBOUTDIR)/bsp/u-boot/$$brd");
-endef
+	@$(MAKE) dl-uboot
+	$(call fbprint_b,"u-boot for $(MACHINE) $(UBOOT_SECOPT)")
+	[ -n "$(uboot_cfg)" ] || { $(call fbprint_e,"Failed to determine u-boot configuration"); exit 1; }
+	opdir=$(FBOUTDIR)/bsp/u-boot/$(MACHINE)/output/$(uboot_cfg)
+	mkdir -p "$$opdir" || exit 1
+	unset PKG_CONFIG_SYSROOT_DIR
+	$(call fbprint_n,"config = $(uboot_cfg)")
+	$(MAKE) -C $(BSPDIR)/uboot O="$$opdir" $(uboot_cfg) $(LOG_MUTE)
+	$(MAKE) -C $(BSPDIR)/uboot O="$$opdir" $(LOG_MUTE)
+	$(call fbprint_d,"u-boot for $(MACHINE) in $(FBOUTDIR)/bsp/u-boot/$(MACHINE)")

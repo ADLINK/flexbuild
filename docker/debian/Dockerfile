@@ -1,31 +1,82 @@
-FROM debian:bookworm
+FROM debian:trixie
 
 ARG http_proxy
-ENV http_proxy $http_proxy
 ARG https_proxy
-ENV https_proxy $https_proxy
 ARG no_proxy
-ENV no_proxy $no_proxy
-ENV DEBIAN_FRONTEND noninteractive
-ENV DEBCONF_NONINTERACTIVE_SEEN true
-RUN echo "Acquire::http::proxy \"$http_proxy\";" | tee -a /etc/apt/apt.conf && \
-    echo "Acquire::https::proxy \"$https_proxy\";" | tee -a /etc/apt/apt.conf && \
-    echo 'PS1="[\u@\h \W]\$ "' | tee -a /root/.bashrc 1>/dev/null
-RUN rm -rf /var/lib/apt/lists/* && apt autoclean
-RUN apt-get update --fix-missing && apt-get install -y locales && \
-    localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 && export LANG=en_US.utf8
 
-RUN apt-get update && apt-get install -y \
-        u-boot-tools device-tree-compiler autoconf automake dh-autoreconf libssl-dev zip \
-        openssl curl flex bison bc git gcc vim ethtool wget ftp make makedev tclsh ccache \
-        binfmt-support qemu-system-common qemu-user-static debootstrap sudo ncurses-dev  \
-        gcc-arm-linux-gnueabihf crossbuild-essential-arm64 gcc-aarch64-linux-gnu file    \
-        build-essential gdb u-boot-tools device-tree-compiler python3 python3-dev python3-pip \
-        libxml2-dev libsensors4-dev libssl-dev libedit-dev liblzma-dev tree binutils-dev \
-        libnuma-dev libpcap-dev libtool mtd-utils libncurses5-dev libelf-dev net-tools   \
-        libcunit1-dev pkg-config autotools-dev crossbuild-essential-armhf openssh-server \
-        openssh-client crossbuild-essential-armhf qemu-utils kmod g++-aarch64-linux-gnu  \
-	cpp-arm-linux-gnueabihf dosfstools ruby iputils-ping cpio rsync libtclap-dev     \
-	parted rpm2cpio lsb-release xutils-dev libwayland-bin cmake locales texinfo gawk \
-	chrpath diffstat scons libgflags-dev libhdf5-serial-dev python3-numpy python3-wheel \
-	python3-h5py
+ENV http_proxy=${http_proxy} \
+    https_proxy=${https_proxy} \
+    no_proxy=${no_proxy} \
+    HTTP_PROXY=${http_proxy} \
+    HTTPS_PROXY=${https_proxy} \
+    NO_PROXY=${no_proxy} \
+    DEBIAN_FRONTEND=noninteractive \
+    DEBCONF_NONINTERACTIVE_SEEN=true \
+    LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    TERM=xterm-256color
+
+
+RUN set -eux; \
+    mkdir -p /etc/apt/apt.conf.d && \
+    { \
+      if [ -n "${http_proxy:-}" ]; then \
+        echo "Acquire::http::proxy \"${http_proxy}\";"; \
+        echo "Acquire::https::proxy \"${https_proxy:-$http_proxy}\";"; \
+      fi; \
+      echo "Acquire::Retries \"5\";"; \
+      echo "Acquire::http::Timeout \"20\";"; \
+      echo "Acquire::https::Timeout \"20\";"; \
+    } > /etc/apt/apt.conf.d/01proxy && \
+    echo 'PS1="[\u@\h \W]\$ "' >> /root/.bashrc && \
+    echo "syntax on" > /root/.vimrc && \
+    echo '' >> /etc/bash.bashrc && \
+    echo '# Fix terminal for menuconfig' >> /etc/bash.bashrc && \
+    echo 'if [ -t 0 ]; then' >> /etc/bash.bashrc && \
+    echo '    stty erase ^H 2>/dev/null || true' >> /etc/bash.bashrc && \
+    echo '    stty -brkint ixany -imaxbel iutf8 2>/dev/null || true' >> /etc/bash.bashrc && \
+    echo 'fi' >> /etc/bash.bashrc
+
+RUN set -eux; \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+      locales \
+      sudo arch-test gpg vim rename xxd autopoint valac hwdata cpio debhelper-compat \
+      build-essential git wget curl rsync ccache pkg-config lsb-release \
+      autoconf automake libtool cmake meson ninja-build parted psmisc e2fsprogs udev \
+      gawk gettext zip unzip xz-utils zstd ruby efitools fdisk whiptail \
+      crossbuild-essential-arm64 gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu \
+      device-tree-compiler u-boot-tools bc flex bison lzop && \
+    sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
+    locale-gen en_US.UTF-8 && \
+    rm -rf /var/lib/apt/lists/*
+
+
+RUN set -eux; \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+      qemu-user-static binfmt-support kmod \
+      mmdebstrap debian-archive-keyring \
+      qt6-base-dev qt6-base-dev-tools qt6-declarative-dev qtchooser \
+      libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+      libwayland-dev libwayland-bin xutils-dev \
+      libssl-dev openssl libusb-1.0-0-dev \
+      libzstd-dev libbz2-dev libzip-dev libglib2.0-dev \
+      libgnutls28-dev libcanberra-dev libncurses-dev \
+      python3 python3-dev python3-pip python3-wheel python3-pybind11 \
+      python3-yaml python3-pyelftools python3-requests python3-tqdm \
+      python3-jinja2 python3-ply python3-numpy python3-kconfiglib \
+      python3-cryptography python3-pyelftools \
+      protobuf-compiler libgdk-pixbuf-2.0-dev libxml2-utils libprotobuf-dev \
+      gtk-doc-tools pandoc apt-cacher-ng && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN git config --global user.email  "debian@nxp.com" && \
+    git config --global user.name "NXP debian" && \
+    git config --global http.sslVerify false && \
+    git config --global --add safe.directory '*'
+
+RUN if [ -n "${http_proxy:-}" ]; then \
+        git config --global http.proxy "${http_proxy}"; \
+        git config --global https.proxy "${https_proxy:-$http_proxy}"; \
+    fi

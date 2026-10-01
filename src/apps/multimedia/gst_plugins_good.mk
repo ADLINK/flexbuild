@@ -1,29 +1,21 @@
-# Copyright 2021-2024 NXP
+# Copyright 2021-2024,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 
 
 
-gst_plugins_good:
-	@[ $(DESTARCH) != arm64 -o $(DISTROVARIANT) != desktop ] && exit || \
-	 $(call fbprint_b,"gst_plugins_good") && \
-	 $(call repo-mngr,fetch,gst_plugins_good,apps/multimedia) && \
-	 cd $(MMDIR)/gst_plugins_good && \
-	 if [ ! -f .patchdone ]; then \
-	     git am $(FBDIR)/patch/gst_plugins_good/*.patch && touch .patchdone; \
-	 fi && \
-	 sed -i 's/0.62/0.61/' meson.build && \
+gst_plugins_good: gst_plugins_base libdrm
+	@$(call download_repo,gst_plugins_good,apps/multimedia)
+	 $(call patch_apply,gst_plugins_good,apps/multimedia)
+	 cd $(MMDIR)/gst_plugins_good
+	 rm -rf build_$(DISTROTYPE)_$(ARCH)
 	 sed -e 's%@TARGET_CROSS@%$(CROSS_COMPILE)%g' -e 's%@STAGING_DIR@%$(RFSDIR)%g' \
-	     -e 's%@DESTDIR@%$(DESTDIR)%g' $(FBDIR)/src/misc/meson/meson.cross > meson.cross && \
-	 if [ ! -f $(DESTDIR)/usr/lib/gstreamer-1.0/libgstvolume.so ]; then \
-	     bld gst_plugins_base -r $(DISTROTYPE):$(DISTROVARIANT) -a $(DESTARCH) -f $(CFGLISTYML); \
-	 fi && \
-	 sudo cp -fr $(DESTDIR)/usr/include/gstreamer-1.0 $(RFSDIR)/usr/include && \
-	 sudo cp -fa $(DESTDIR)/usr/lib/libgsttag-1.0.so* $(RFSDIR)/usr/lib && \
-	 if [ ! -f $(DESTDIR)/usr/lib/libdrm.so ]; then \
-	     bld libdrm -r $(DISTROTYPE):$(DISTROVARIANT) -a $(DESTARCH) -f $(CFGLISTYML); \
-	 fi && \
+	     -e 's%@DESTDIR@%$(DESTDIR)%g' $(FBDIR)/src/system/meson.cross > meson.cross
+	 mkdir -p $(RFSDIR)/usr/include/gstreamer-1.0 $(RFSDIR)/usr/lib/
+	 rsync -a $(DESTDIR)/usr/include/gstreamer-1.0/ $(RFSDIR)/usr/include/gstreamer-1.0/
+	 rsync -a --inplace $(DESTDIR)/usr/lib/libgsttag-1.0.so* $(RFSDIR)/usr/lib/
+	 $(call fbprint_b,"gst_plugins_good")
 	 meson setup build_$(DISTROTYPE)_$(ARCH) \
 		-Dc_args="-I$(DESTDIR)/usr/include/gstreamer-1.0 \
 			  -I$(DESTDIR)/usr/lib/gstreamer-1.0/include -I$(DESTDIR)/usr/include" \
@@ -79,6 +71,6 @@ gst_plugins_good:
 		-Dosxvideo=disabled \
 		-Dshout2=disabled \
 		-Dtwolame=disabled \
-		-Dwaveform=disabled && \
-	 ninja -j $(JOBS) -C build_$(DISTROTYPE)_$(ARCH) install && \
+		-Dwaveform=disabled $(LOG_MUTE)
+	 ninja -C build_$(DISTROTYPE)_$(ARCH) install $(LOG_MUTE)
 	 $(call fbprint_d,"gst_plugins_good")

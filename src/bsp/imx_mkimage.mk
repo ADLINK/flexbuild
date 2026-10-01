@@ -1,127 +1,149 @@
-# Copyright 2020-2024 NXP
+# Copyright 2020-2024,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-define imx_mkimage_target
-    if [ ! -d $(BSPDIR)/imx_mkimage ]; then \
-	$(call repo-mngr,fetch,imx_mkimage,bsp); \
-    fi && \
-    \
-    if [ ! -d $(BSPDIR)/firmware-imx ]; then \
-	cd $(BSPDIR) && wget -q $(repo_firmware_imx_bin_url) -O firmware_imx.bin && chmod +x firmware_imx.bin && \
-	./firmware_imx.bin --auto-accept && mv firmware-imx* firmware-imx && rm -f firmware_imx.bin; \
-    fi && \
-    if [ ! -d $(BSPDIR)/imx-seco/firmware/seco ]; then \
-	cd $(BSPDIR) && wget -q $(repo_seco_bin_url) -O imx-seco.bin && chmod +x imx-seco.bin && \
-	./imx-seco.bin --auto-accept && mv `basename -s .bin $(repo_seco_bin_url)` imx-seco && rm -f imx-seco.bin; \
-    fi && \
-    if [ ! -d $(BSPDIR)/fw_ele ]; then \
-	cd $(BSPDIR) && wget -q $(repo_fw_ele_bin_url) -O fw_ele.bin && chmod +x fw_ele.bin && \
-	./fw_ele.bin --auto-accept && mv `basename -s .bin $(repo_fw_ele_bin_url)` fw_ele && rm -f fw_ele.bin; \
-    fi && \
-    if [ ! -d $(BSPDIR)/fw_upower ]; then \
-	cd $(BSPDIR) && wget -q $(repo_fw_upower_bin_url) -O fw_upower.bin && chmod +x fw_upower.bin && \
-	./fw_upower.bin --auto-accept && mv `basename -s .bin $(repo_fw_upower_bin_url)` fw_upower && rm -f fw_upower.bin; \
-    fi && \
-    if [ ! -f $(BSPDIR)/imx-scfw/mx8qx-mek-scfw-tcm.bin ]; then \
-	wget -q $(repo_scfw_bin_url) -O imx-scfw.bin && chmod +x imx-scfw.bin && \
-	./imx-scfw.bin --auto-accept && mv `basename -s .bin $(repo_scfw_bin_url)` imx-scfw && rm -f imx-scfw.bin; \
-    fi && \
-    if [ ! -d $(BSPDIR)/imx_mcore_demos ]; then \
-	bld mcore_demo; \
-    fi && \
-    \
-    if echo $1 | grep -qE ^imx8mp_ddr4_evk; then \
-	SOC=iMX8MP; SOC_FAMILY=iMX8M; target=flash_ddr4_evk; \
-    elif echo $1 | grep -qE ^imx8mp_evk; then \
-	SOC=iMX8MP; SOC_FAMILY=iMX8M; target=flash_evk; \
-    elif echo $1 | grep -qE ^imx8mm_ddr4_evk; then \
-	SOC=iMX8MM; SOC_FAMILY=iMX8M; target=flash_ddr4_evk; \
-    elif echo $1 | grep -qE ^imx8mm_evk; then \
-	SOC=iMX8MM; SOC_FAMILY=iMX8M; target=flash_evk; \
-    elif echo $1 | grep -qE ^imx8mn_ddr4_evk; then \
-	SOC=iMX8MN; SOC_FAMILY=iMX8M; target=flash_ddr4_evk; \
-    elif echo $1 | grep -qE ^imx8mn_evk; then \
-	SOC=iMX8MN; SOC_FAMILY=iMX8M; target=flash_evk; \
-    elif echo $1 | grep -qE ^imx8mq_ddr4_val; then \
-	SOC=iMX8M; SOC_FAMILY=iMX8M; target=flash_ddr4_val; \
-    elif echo $1 | grep -qE ^imx8mq_evk; then \
-	SOC=iMX8M; SOC_FAMILY=iMX8M; target=flash_evk; \
-    elif echo $1 | grep -qE ^imx8qm; then \
-	SOC=iMX8QM; SOC_FAMILY=iMX8QM; target=flash_spl; \
-	cp -f $(BSPDIR)/imx-scfw/mx8qm-mek-scfw-tcm.bin $(BSPDIR)/imx_mkimage/iMX8QM/scfw_tcm.bin; \
-	cp -f $(BSPDIR)/imx-seco/firmware/seco/mx8qmb0-ahab-container.img $(BSPDIR)/imx_mkimage/iMX8QM; \
-    elif echo $1 | grep -qE ^imx8qx; then \
-	SOC=iMX8QX; SOC_FAMILY=iMX8QX; target=flash_spl; \
-	cp -f $(BSPDIR)/imx-scfw/mx8qx-mek-scfw-tcm.bin $(BSPDIR)/imx_mkimage/iMX8QX/scfw_tcm.bin; \
-	cp -f $(BSPDIR)/imx-seco/firmware/seco/mx8qx*-ahab-container.img $(BSPDIR)/imx_mkimage/iMX8QX; \
-    elif echo $1 | grep -qE ^imx8ulp; then \
-	SOC=iMX8ULP; SOC_FAMILY=iMX8ULP; target=flash_singleboot_m33; \
-	cp $(BSPDIR)/fw_ele/mx8ulpa2-ahab-container.img $(BSPDIR)/imx_mkimage/iMX8ULP; \
-	cp $(BSPDIR)/fw_upower/upower_a1.bin $(BSPDIR)/imx_mkimage/iMX8ULP/upower.bin; \
-	cp $(BSPDIR)/imx_mcore_demos/imx8ulp-m33.bin $(BSPDIR)/imx_mkimage/iMX8ULP/m33_image.bin; \
-    elif echo $1 | grep -qE ^imx93; then \
-	SOC=iMX93; SOC_FAMILY=iMX93; target=flash_singleboot; \
-	cp $(BSPDIR)/fw_ele/mx93a*-ahab-container.img $(BSPDIR)/imx_mkimage/iMX93; \
-	cp $(BSPDIR)/fw_upower/upower_a*.bin $(BSPDIR)/imx_mkimage/iMX93/; \
-	cp $(BSPDIR)/imx_mcore_demos/imx93-m33-demo/imx93-11x11-evk_m33_TCM_rpmsg_lite_str_echo_rtos.bin \
-	   $(BSPDIR)/imx_mkimage/iMX93/m33_image.bin; \
-    fi && \
-    cp -f $(BSPDIR)/firmware-imx/firmware/ddr/synopsys/*.bin $(BSPDIR)/imx_mkimage/$$SOC_FAMILY; \
-    \
-    cd $(BSPDIR)/imx_mkimage && \
-    $(MAKE) clean && $(MAKE) bin && \
-    $(MAKE) SOC=iMX8M mkimage_imx8 && \
-    if [ $(MACHINE) = imx8qmevk ];  then \
-	$(MAKE) -C iMX8QM -f soc.mak imx8qm_dcd.cfg.tmp; \
-    elif [ $(MACHINE) = imx8qxpmek ]; then \
-	$(MAKE) -C iMX8QX REV=B0 -f soc.mak $$target; \
-    elif [ $(MACHINE) = imx93evk ]; then \
-	$(MAKE) SOC=iMX93 REV=A1 -C iMX93 -f soc.mak $$target; \
-    fi && \
-    \
-    bl32=$(PKGDIR)/apps/security/optee_os/out/arm-plat-imx/core/tee_$$brd.bin && \
-    if [ $(CONFIG_OPTEE) = y -a ! -f $$bl32 ]; then \
-	bld optee_os -m $$brd -f $(CFGLISTYML); \
-    fi && \
-    [ $(MACHINE) = imx8ulpevk ] && plat=$${MACHINE:0:7} || plat=$${MACHINE:0:6} && \
-    [ $(MACHINE) = imx93evk ] && plat=$${MACHINE:0:5} || true && \
-    cp -t $(BSPDIR)/imx_mkimage/$$SOC_FAMILY \
-	$(BSPDIR)/firmware-imx/firmware/hdmi/cadence/signed*_imx8m.bin \
-	$$opdir/spl/u-boot-spl.bin $$opdir/u-boot.bin \
-	$$opdir/arch/arm/dts/*$${plat}*.dtb \
-	$$opdir/u-boot-nodtb.bin && \
-    cp -f $$bl32 $(BSPDIR)/imx_mkimage/$$SOC_FAMILY/tee.bin && \
-    cp -f $$opdir/tools/mkimage $(BSPDIR)/imx_mkimage/$$SOC_FAMILY/mkimage_uboot; \
-    cp -f $(BSPDIR)/atf/build/$$plat/release/bl31.bin $(BSPDIR)/imx_mkimage/$$SOC_FAMILY/; \
-    \
-    $(MAKE) SOC=$$SOC $$REV_OPTION $$target && \
-    mkdir -p $(FBOUTDIR)/bsp/imx-mkimage/$$brd && \
-    if [ $(MACHINE) = imx8mpevk -o $(MACHINE) = imx8mnevk -o $(MACHINE) = imx8mmevk -o \
-	   $(MACHINE) = imx8mqevk ] && [ $$target = flash_ddr4_evk -o $$target = flash_ddr4_val ]; then \
-	cp $$SOC_FAMILY/flash.bin $(FBOUTDIR)/bsp/imx-mkimage/$$brd/flash-ddr4.bin; \
-    elif [ $(MACHINE) = imx8mpevk -o $(MACHINE) = imx8mnevk -o $(MACHINE) = imx8mmevk -o \
-	   $(MACHINE) = imx8mqevk ] && [ $$target = flash_evk ]; then \
-	cp $$SOC_FAMILY/flash.bin $(FBOUTDIR)/bsp/imx-mkimage/$$brd/flash-lpddr4.bin; \
-    elif [ $(MACHINE) = imx8ulpevk -a $$target = flash_singleboot ]; then \
-	cp $$SOC_FAMILY/flash.bin $(FBOUTDIR)/bsp/imx-mkimage/$$brd/flash-singleboot.bin; \
-    elif [ $(MACHINE) = imx8ulpevk -a $$target = flash_singleboot_m33 ]; then \
-	cp $$SOC_FAMILY/flash.bin $(FBOUTDIR)/bsp/imx-mkimage/$$brd/flash-singleboot-m33.bin; \
-    elif [ $(MACHINE) = imx8ulpevk -a $$target = flash_dualboot ]; then \
-	cp $$SOC_FAMILY/flash.bin $(FBOUTDIR)/bsp/imx-mkimage/$$brd/flash-dualboot.bin; \
-    elif [ $(MACHINE) = imx8ulpevk -a $$target = flash_dualboot_m33 ]; then \
-	cp $$SOC_FAMILY/flash.bin $(FBOUTDIR)/bsp/imx-mkimage/$$brd/flash-dualboot-m33.bin; \
-    elif [ $(MACHINE) = imx93evk -a $$target = flash_singleboot ]; then \
-	 cp $$SOC_FAMILY/flash.bin $(FBOUTDIR)/bsp/imx-mkimage/$$brd/flash-singleboot-a1.bin; \
-    else \
-	cp $$SOC_FAMILY/flash.bin $(FBOUTDIR)/bsp/imx-mkimage/$$brd/flash.bin; \
-    fi && \
-    if [ $(MACHINE) = imx8qxpmek ]; then \
-	mv $$SOC_FAMILY/flash.bin $(FBOUTDIR)/bsp/imx-mkimage/$$brd/flash-b0.bin; \
-	$(MAKE) clean && $(MAKE) bin && \
-	$(MAKE) SOC=iMX8QX mkimage_imx8 && \
-	$(MAKE) SOC=iMX8QX REV=C0 -C iMX8QX -f soc.mak $$target && \
-	mv $$SOC_FAMILY/flash.bin $(FBOUTDIR)/bsp/imx-mkimage/$$brd/flash-c0.bin; \
+UTILSDIR = $(PKGDIR)/apps/utils
+
+define dl_imx_seco
+	if [ ! -d $(BSPDIR)/imx-seco/firmware/seco ]; then
+		cd $(BSPDIR) && $(call dl_by_wget,seco_bin,imx-seco.bin) && chmod +x $(FBDIR)/dl/imx-seco.bin
+		$(FBDIR)/dl/imx-seco.bin --auto-accept --force $(LOG_MUTE) && mv `basename -s .bin $(repo_seco_bin_url)` imx-seco
+	fi
+endef
+
+define dl_fw_ele
+    if [ ! -d $(BSPDIR)/fw_ele ]; then
+		cd $(BSPDIR) && $(call dl_by_wget,fw_ele_bin,fw_ele.bin) && chmod +x $(FBDIR)/dl/fw_ele.bin
+		$(FBDIR)/dl/fw_ele.bin --auto-accept --force $(LOG_MUTE) && mv `basename -s .bin $(repo_fw_ele_bin_url)` fw_ele
     fi
 endef
+
+define dl_fw_upower
+    if [ ! -d $(BSPDIR)/fw_upower ]; then
+		cd $(BSPDIR) && $(call dl_by_wget,fw_upower_bin,fw_upower.bin) && chmod +x $(FBDIR)/dl/fw_upower.bin
+		$(FBDIR)/dl/fw_upower.bin --auto-accept --force $(LOG_MUTE) && mv `basename -s .bin $(repo_fw_upower_bin_url)` fw_upower
+    fi
+endef
+
+define dl_imx_scfw
+    if [ ! -d $(BSPDIR)/imx-scfw ]; then
+		cd $(BSPDIR) && $(call dl_by_wget,scfw_bin,imx-scfw.bin) && chmod +x $(FBDIR)/dl/imx-scfw.bin
+		$(FBDIR)/dl/imx-scfw.bin --auto-accept --force $(LOG_MUTE) && mv `basename -s .bin $(repo_scfw_bin_url)` imx-scfw
+    fi
+endef
+
+# Define common paths
+UBOOT_OUT_DIR   = $(FBOUTDIR)/bsp/u-boot/$(MACHINE)/output/$(uboot_cfg)
+IMX_MKIMAGE_DIR := $(BSPDIR)/imx_mkimage
+BL32_BIN        = $(PKGDIR)/apps/security/optee_os/out/arm-plat-imx/core/tee_$(MACHINE).bin
+
+# --- i.MX 8M Family (8MM, 8MP, 8MP-FRDM) ---
+ifdef CONFIG_SOC_IMX8M
+define build_soc_recipe
+	@echo "Building flash.bin for iMX8M family $(ATF_OPTINFO)"
+	$(eval IMX8MDIR := $(IMX_MKIMAGE_DIR)/iMX8M)
+	cp -f $(UBOOT_OUT_DIR)/tools/mkimage $(IMX8MDIR)/mkimage_uboot
+	cp -f $(UBOOT_OUT_DIR)/spl/u-boot-spl.bin $(UBOOT_OUT_DIR)/u-boot-nodtb.bin $(IMX8MDIR)/
+	cp -f $(UTILSDIR)/firmware_imx/firmware/hdmi/cadence/signed*_imx8m.bin $(IMX8MDIR)/
+	cp -f $(UTILSDIR)/firmware_imx/firmware/ddr/synopsys/*.bin $(IMX8MDIR)/
+	cp -f $(BSPDIR)/atf/build/$(if $(CONFIG_SOC_IMX8MMEVK),imx8mm,imx8mp)/release/bl31.bin $(IMX8MDIR)/
+	$(if $(CONFIG_OPTEE),cp -f $(BL32_BIN) $(IMX8MDIR)/tee.bin)
+	@# DTB handling and renaming for FRDM
+	$(if $(CONFIG_SOC_IMX8MMEVK), cp -f $(UBOOT_OUT_DIR)/dts/upstream/src/arm64/freescale/imx8mm-evk.dtb $(IMX8MDIR)/)
+	$(if $(CONFIG_SOC_IMX8MPEVK), cp -f $(UBOOT_OUT_DIR)/dts/upstream/src/arm64/freescale/imx8mp-evk.dtb $(IMX8MDIR)/)
+	$(if $(CONFIG_SOC_IMX8MPFRDM),cp -f $(UBOOT_OUT_DIR)/arch/arm/dts/imx8mp-frdm.dtb $(IMX8MDIR)/imx8mp-evk.dtb)
+	cd $(IMX_MKIMAGE_DIR) && $(MAKE) SOC=$(if $(CONFIG_SOC_IMX8MMEVK),iMX8MM,iMX8MP) flash_evk $(LOG_MUTE)
+	cp -f $(IMX8MDIR)/flash.bin $(FBOUTDIR)/images/$(MACHINE)-sd-flash.bin
+endef
+endif
+
+# --- i.MX 8QM Family ---
+ifdef CONFIG_SOC_IMX8QMMEK
+define build_soc_recipe
+	@echo "Building flash.bin for iMX8QM $(ATF_OPTINFO)"
+	$(call dl_imx_scfw)
+	$(call dl_imx_seco)
+	cp -f $(UBOOT_OUT_DIR)/u-boot.bin $(UBOOT_OUT_DIR)/spl/u-boot-spl.bin $(IMX_MKIMAGE_DIR)/iMX8QM/
+	cp -f $(BSPDIR)/imx-scfw/mx8qm-mek-scfw-tcm.bin $(IMX_MKIMAGE_DIR)/iMX8QM/scfw_tcm.bin
+	cp -f $(BSPDIR)/atf/build/imx8qm/release/bl31.bin $(IMX_MKIMAGE_DIR)/iMX8QM/
+	cp -f $(BSPDIR)/imx-seco/firmware/seco/mx8qmb0-ahab-container.img $(IMX_MKIMAGE_DIR)/iMX8QM/
+	$(if $(CONFIG_OPTEE),cp -f $(BL32_BIN) $(IMX_MKIMAGE_DIR)/iMX8QM/tee.bin)
+	cd $(IMX_MKIMAGE_DIR) && $(MAKE) SOC=iMX8QM $(if $(CONFIG_OPTEE),flash_spl,flash) $(LOG_MUTE)
+	cp -f $(IMX_MKIMAGE_DIR)/iMX8QM/flash.bin $(FBOUTDIR)/images/$(MACHINE)-sd-flash.bin
+endef
+endif
+
+# --- i.MX 91 Family ---
+ifdef CONFIG_SOC_IMX91
+define build_soc_recipe
+	@echo "Building flash.bin for iMX91 $(ATF_OPTINFO)"
+	$(call dl_fw_ele)
+	$(eval IMX91DIR := $(IMX_MKIMAGE_DIR)/iMX91)
+	cp -f $(UBOOT_OUT_DIR)/spl/u-boot-spl.bin $(UBOOT_OUT_DIR)/u-boot.bin $(IMX91DIR)/
+	cp -f $(BSPDIR)/atf/build/imx91/release/bl31.bin $(IMX91DIR)/
+	cp -f $(BSPDIR)/fw_ele/mx91a*-ahab-container.img $(IMX91DIR)/
+	cp -f $(UTILSDIR)/firmware_imx/firmware/ddr/synopsys/*.bin $(IMX91DIR)/
+	$(if $(CONFIG_OPTEE),cp -f $(BL32_BIN) $(IMX91DIR)/tee.bin)
+	cd $(IMX_MKIMAGE_DIR) && $(MAKE) SOC=iMX91 flash_singleboot $(LOG_MUTE)
+	cp -f $(IMX91DIR)/flash.bin $(FBOUTDIR)/images/$(MACHINE)-sd-flash.bin
+endef
+endif
+
+# --- i.MX 93 Family ---
+ifdef CONFIG_SOC_IMX93
+define build_soc_recipe
+	@echo "Building flash.bin for iMX93 $(ATF_OPTINFO)"
+	$(call dl_fw_ele)
+	$(eval IMX93DIR := $(IMX_MKIMAGE_DIR)/iMX93)
+	cp -f $(UBOOT_OUT_DIR)/spl/u-boot-spl.bin $(UBOOT_OUT_DIR)/u-boot.bin $(IMX93DIR)/
+	cp -f $(BSPDIR)/atf/build/imx93/release/bl31.bin $(IMX93DIR)/
+	cp -f $(BSPDIR)/fw_ele/mx93a*-ahab-container.img $(IMX93DIR)/
+	cp -f $(UTILSDIR)/firmware_imx/firmware/ddr/synopsys/*.bin $(IMX93DIR)/
+	$(if $(CONFIG_OPTEE),cp -f $(BL32_BIN) $(IMX93DIR)/tee.bin)
+	cd $(IMX_MKIMAGE_DIR) && $(MAKE) SOC=iMX93 flash_singleboot $(LOG_MUTE)
+	cp -f $(IMX93DIR)/flash.bin $(FBOUTDIR)/images/$(MACHINE)-sd-flash.bin
+endef
+endif
+
+# --- i.MX 95 Family ---
+ifdef CONFIG_SOC_IMX95
+define build_soc_recipe
+	@$(call dl_fw_ele)
+	$(eval IMX95DIR := $(IMX_MKIMAGE_DIR)/iMX95)
+	cp -f $(UTILSDIR)/firmware_imx/firmware/ddr/synopsys/*.bin $(IMX95DIR)/
+	cp -f $(BSPDIR)/fw_ele/mx95b0-ahab-container.img $(IMX95DIR)/
+	cp -f $(BSPDIR)/atf/build/imx95/release/bl31.bin $(IMX95DIR)/
+	cp -f $(BSPDIR)/imx_sm/build/mx95lec/m33_image.bin $(IMX95DIR)/
+	cp -f $(UBOOT_OUT_DIR)/spl/u-boot-spl.bin $(UBOOT_OUT_DIR)/u-boot.bin $(IMX95DIR)/
+	$(if $(CONFIG_OPTEE),cp -f $(BL32_BIN) $(IMX95DIR)/tee.bin)
+
+	@# 2. Case Specific Files (M7 and OEI)
+	$(if $(CONFIG_SOC_IMX95_15X15), \
+		cp -f $(BSPDIR)/imx_oei/build/mx95lp4x-15/ddr/oei-m33-ddr.bin $(IMX95DIR)/; \
+		cp -f $(UTILSDIR)/mcore_demo/imx95-m7-demo/imx95-15x15-evk_m7_TCM_power_mode_switch.bin $(IMX95DIR)/m7_image.bin; \
+		cd $(IMX_MKIMAGE_DIR) && $(MAKE) SOC=iMX95 REV=B0 OEI=YES LPDDR_TYPE=lpddr4x flash_all $(LOG_MUTE); \
+	)
+	$(if $(CONFIG_SOC_IMX95_19X19), \
+		cp -f $(BSPDIR)/imx_oei/build/mx95lp5/ddr/oei-m33-ddr.bin $(IMX95DIR)/; \
+		cp -f $(UTILSDIR)/mcore_demo/imx95-m7-demo/imx95-19x19-evk_m7_TCM_power_mode_switch.bin $(IMX95DIR)/m7_image.bin; \
+		cd $(IMX_MKIMAGE_DIR) && $(MAKE) SOC=iMX95 REV=B0 OEI=YES flash_all $(LOG_MUTE); \
+	)
+	$(if $(CONFIG_SOC_LEC_IMX95), \
+    		cp -f $(BSPDIR)/imx_oei/build/mx95lp5/ddr/oei-m33-ddr.bin $(IMX95DIR)/oei-m33-ddr.bin; \
+    		cp -f $(BSPDIR)/imx_oei/build/mx95lp5/ddr/oei-m33-ddr.bin $(IMX95DIR)/oei-m33-tcm.bin; \
+    		cp -f $(BSPDIR)/imx_oei/build/mx95lp5/ddr/oei-m33-ddr.bin $(IMX95DIR)/m7_image.bin; \
+    		cd $(IMX_MKIMAGE_DIR) && $(MAKE) SOC=iMX95 REV=B0 OEI=YES flash_all $(LOG_MUTE); \
+	)
+	cp -f $(IMX95DIR)/flash.bin $(FBOUTDIR)/images/$(MACHINE)-sd-flash.bin
+endef
+endif
+
+flash.bin imx_mkimage: uboot atf firmware_imx mcore_demo
+	@$(call download_repo,imx_mkimage,bsp)
+	$(call patch_apply,imx_mkimage,bsp)
+	mkdir -p $(FBOUTDIR)/bsp/imx-mkimage/$(MACHINE)
+	cd $(IMX_MKIMAGE_DIR)
+	$(MAKE) clean $(LOG_MUTE)
+	$(build_soc_recipe)
+	$(call fbprint_d,"flash.bin for $(MACHINE) in $(FBOUTDIR)/images/$(MACHINE)-sd-flash.bin")

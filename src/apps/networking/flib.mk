@@ -1,12 +1,11 @@
-# Copyright 2017-2023 NXP
+# Copyright 2017-2023,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 
 flib:
-	@[ $(DESTARCH) != arm64 -o $(SOCFAMILY) != LS -o \
-	   $(DISTROVARIANT) = tiny -o $(DISTROVARIANT) = base ] && exit || \
-	 $(call fbprint_b,"flib") && \
-	 $(call repo-mngr,fetch,flib,apps/networking) && \
-	 $(MAKE) -C $(NETDIR)/flib install && \
+	@$(call download_repo,flib,apps/networking)
+	 $(call patch_apply,flib,apps/networking)
+	 $(call fbprint_b,"flib")
+	 $(MAKE) -C $(NETDIR)/flib install $(LOG_MUTE)
 	 $(call fbprint_d,"flib")

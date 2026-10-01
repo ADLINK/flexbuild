@@ -1,4 +1,4 @@
-# Copyright 2021-2023 NXP
+# Copyright 2021-2024,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -9,42 +9,39 @@
 # depends on libsbc-dev libsndfile1-dev libwebp-dev
 
 
-gst_plugins_bad:
-	@[ $(DESTARCH) != arm64 -o $(DISTROVARIANT) != desktop ] && exit || \
-	 $(call fbprint_b,"gst_plugins_bad") && \
-	 $(call repo-mngr,fetch,gst_plugins_bad,apps/multimedia) && \
-	 cd $(MMDIR)/gst_plugins_bad && \
-	 if ! grep -q libexecdir= meson.build; then \
-	     sed -i "/pkgconfig_variables =/a\  'libexecdir=\$\{prefix\}/libexec'," meson.build && \
-	     sed -i "/pkgconfig_variables =/a\  'datadir=\$\{prefix\}/share'," meson.build && \
-	     sed -i 's/0.62/0.61/' meson.build; \
-	 fi && \
+#gst_plugins_bad:
+gst_plugins_bad: gst_plugins_base
+	@$(call download_repo,gst_plugins_bad,apps/multimedia)
+	 $(call patch_apply,gst_plugins_bad,apps/multimedia)
+	 cd $(MMDIR)/gst_plugins_bad
+	 if ! grep -q libexecdir= meson.build; then
+	     sed -i "/pkgconfig_variables =/a\  'libexecdir=\$\{prefix\}/libexec'," meson.build
+	     sed -i "/pkgconfig_variables =/a\  'datadir=\$\{prefix\}/share'," meson.build
+	 fi
 	 sed -e 's%@TARGET_CROSS@%$(CROSS_COMPILE)%g' -e 's%@STAGING_DIR@%$(RFSDIR)%g' \
-	     -e 's%@DESTDIR@%$(DESTDIR)%g' $(FBDIR)/src/misc/meson/meson.cross > meson.cross && \
-	 if [ ! -f $(DESTDIR)/usr/lib/gstreamer-1.0/libgstopengl.so ]; then \
-	     bld gst_plugins_base -r $(DISTROTYPE):$(DISTROVARIANT) -a $(DESTARCH) -f $(CFGLISTYML); \
-	 fi && \
-	 if [ ! -f $(DESTDIR)/usr/include/wayland-client.h ]; then \
-	     bld wayland -r $(DISTROTYPE):$(DISTROVARIANT) -a $(DESTARCH) -f $(CFGLISTYML); \
-	 fi && \
-	 if [ ! -f $(DESTDIR)/usr/share/pkgconfig/wayland-protocols.pc ]; then \
-	     bld wayland_protocols -r $(DISTROTYPE):$(DISTROVARIANT) -a $(DESTARCH) -f $(CFGLISTYML); \
-	 fi && \
-	 if [ -f $(RFSDIR)/usr/lib/aarch64-linux-gnu/libgstvideo-1.0.so ]; then \
-	     sudo rm -f $(RFSDIR)/lib/aarch64-linux-gnu/{libgstbase-1.0.so,libgstbase-1.0.so.0,libgbm.so,libgbm.so.1} && \
-	     sudo rm -f $(RFSDIR)/lib/aarch64-linux-gnu/{libgstallocators-1.0.so} && \
-	     sudo rm -f $(RFSDIR)/lib/aarch64-linux-gnu/{libgstvideo-1.0.so,libgstvideo-1.0.so.0,libgstaudio-1.0.so.0}; \
-	 fi && \
-	 sudo cp -rf $(DESTDIR)/usr/include/{libdrm,gstreamer-1.0} $(RFSDIR)/usr/include && \
-	 sudo cp -rf $(DESTDIR)/usr/share/wayland-protocols $(RFSDIR)/usr/share && \
-	 sudo cp -f $(DESTDIR)/usr/lib/libgsttag-1.0.so* $(RFSDIR)/usr/lib && \
-	 \
+	     -e 's%@DESTDIR@%$(DESTDIR)%g' $(FBDIR)/src/system/meson.cross > meson.cross
+	 $(call fbprint_b,"gst_plugins_bad")
+	 rm -rf build_$(DISTROTYPE)_$(ARCH)
+	 if [ -f $(RFSDIR)/usr/lib/aarch64-linux-gnu/libgstvideo-1.0.so ]; then
+	     rm -f $(RFSDIR)/lib/aarch64-linux-gnu/{libgstbase-1.0.so,libgstbase-1.0.so.0,libgbm.so,libgbm.so.1}
+	     rm -f $(RFSDIR)/lib/aarch64-linux-gnu/{libgstallocators-1.0.so}
+	     rm -f $(RFSDIR)/lib/aarch64-linux-gnu/{libgstvideo-1.0.so,libgstvideo-1.0.so.0,libgstaudio-1.0.so.0}
+	 fi
+	 mkdir -p $(RFSDIR)/usr/include $(RFSDIR)/usr/lib/gstreamer-1.0
+	 cp -af $(DESTDIR)/usr/lib/gstreamer-1.0 $(RFSDIR)/usr/lib
+	 cp -af --remove-destination  $(DESTDIR)/usr/include/{libdrm,gstreamer-1.0} $(RFSDIR)/usr/include
+	 cp -af $(DESTDIR)/usr/lib/libgstbase-1.0.so.0* $(RFSDIR)/usr/lib/
+	 cp -af $(DESTDIR)/usr/lib/libgstreamer-1.0.so* $(RFSDIR)/usr/lib/
 	 meson setup build_$(DISTROTYPE)_$(ARCH) \
 		-Dc_args="-O2 -pipe -g -feliminate-unused-debug-types \
 			  -I$(DESTDIR)/usr/include -I$(DESTDIR)/usr/lib/gstreamer-1.0/include \
 			  -I$(DESTDIR)/usr/include/gstreamer-1.0 -I$(RFSDIR)/usr/include" \
-		-Dc_link_args="-L$(DESTDIR)/usr/lib -L$(RFSDIR)/usr/lib/aarch64-linux-gnu -ludev -lbsd -lpthread -lgstbase-1.0" \
-		-Dcpp_link_args="-L$(DESTDIR)/usr/lib -L$(RFSDIR)/usr/lib/aarch64-linux-gnu -ludev -lbsd -lpthread -lgstbase-1.0" \
+		-Dc_link_args="-Wl,--as-needed \
+				-L$(DESTDIR)/usr/lib -Wl,-rpath-link=$(DESTDIR)/usr/lib \
+				-L$(RFSDIR)/usr/lib -L$(RFSDIR)/usr/lib/aarch64-linux-gnu \
+			    -ludev -lbsd -lpthread -lgstbase-1.0 -lgstreamer-1.0 -lgstallocators-1.0" \
+		-Dcpp_link_args="-L$(DESTDIR)/usr/lib -L$(RFSDIR)/usr/lib -L$(RFSDIR)/usr/lib/aarch64-linux-gnu \
+				 -ludev -lbsd -lpthread -lgstbase-1.0 -lgstreamer-1.0 -lgstallocators-1.0 -Wl,-rpath-link=$(DESTDIR)/usr/lib" \
 		--prefix=/usr --buildtype=release \
 		--cross-file meson.cross \
 		--strip \
@@ -76,7 +73,6 @@ gst_plugins_bad:
 		-Dgs=disabled \
 		-Dgsm=disabled \
 		-Diqa=disabled \
-		-Dkate=disabled \
 		-Dladspa=disabled \
 		-Dldac=disabled \
 		-Dlv2=disabled \
@@ -159,6 +155,6 @@ gst_plugins_bad:
 		-Dwebrtcdsp=disabled \
 		-Dx11=enabled \
 		-Dx265=disabled \
-		-Dzbar=disabled && \
-	ninja -j $(JOBS) -C build_$(DISTROTYPE)_$(ARCH) install && \
+		-Dzbar=disabled $(LOG_MUTE)
+	ninja -C build_$(DISTROTYPE)_$(ARCH) install $(LOG_MUTE)
 	$(call fbprint_d,"gst_plugins_bad")

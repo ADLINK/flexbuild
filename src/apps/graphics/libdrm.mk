@@ -1,14 +1,15 @@
-# Copyright 2017-2023 NXP
+# Copyright 2017-2024,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 libdrm:
-	@[ $(DESTARCH) != arm64 -o $(DISTROVARIANT) != desktop -a $(MACHINE) != imx93evk ] && exit || \
-	 $(call fbprint_b,"libdrm") && \
-	 $(call repo-mngr,fetch,libdrm,apps/graphics) && \
-	 cd $(GRAPHICSDIR)/libdrm && \
+	@$(call download_repo,libdrm,apps/graphics)
+	 $(call patch_apply,libdrm,apps/graphics)
+	 $(call fbprint_b,"libdrm")
+	 cd $(GRAPHICSDIR)/libdrm
 	 sed -e 's%@TARGET_CROSS@%$(CROSS_COMPILE)%g' -e 's%@STAGING_DIR@%$(RFSDIR)%g' \
-	     -e 's%@DESTDIR@%$(DESTDIR)%g' $(FBDIR)/src/misc/meson/meson.cross > meson.cross && \
+	     -e 's%@DESTDIR@%$(DESTDIR)%g' $(FBDIR)/src/system/meson.cross > meson.cross
+	 rm -rf build_$(DISTROTYPE)_$(ARCH)
 	 PYTHONNOUSERSITE=y PKG_CONFIG_SYSROOT_DIR=$(RFSDIR) \
 	 meson setup build_$(DISTROTYPE)_$(ARCH) \
 		--cross-file=meson.cross \
@@ -33,7 +34,11 @@ libdrm:
 		-Dvc4=enabled \
 		-Dvivante=true \
 		-Dvmwgfx=enabled \
-		-Dc_link_args="-pthread" && \
+		-Dc_link_args="-pthread" $(LOG_MUTE)
+	 rm -f $(DESTDIR)/usr/lib/libdrm.so*
+	 rm -f $(RFSDIR)/usr/lib/libdrm.so*
 	 PYTHONNOUSERSITE=y DESTDIR=$(DESTDIR) \
-	 ninja -j$(JOBS) install -C build_$(DISTROTYPE)_$(ARCH) && \
+	 ninja install -C build_$(DISTROTYPE)_$(ARCH) $(LOG_MUTE)
+	 PYTHONNOUSERSITE=y DESTDIR=$(RFSDIR) \
+	 ninja install -C build_$(DISTROTYPE)_$(ARCH) $(LOG_MUTE)
 	 $(call fbprint_d,"libdrm")

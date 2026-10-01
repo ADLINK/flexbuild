@@ -1,4 +1,4 @@
-# Copyright 2021-2023 NXP
+# Copyright 2021-2024,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -7,19 +7,19 @@
 
 
 imx_parser:
-	@[ $(DISTROVARIANT) != desktop -o $(DESTARCH) != arm64 ] && exit || \
-	 $(call fbprint_b,"imx_parser") && \
-	 cd $(MMDIR) && \
-	 if [ ! -d imx_parser ]; then \
-	     wget -q $(repo_imx_parser_bin_url) -O imx_parser.bin && \
-	     chmod +x imx_parser.bin && ./imx_parser.bin --auto-accept && \
-	     mv imx-parser* imx_parser && rm -f imx_parser.bin; \
-	 fi && \
-	 cd imx_parser && \
-	 ./configure CC=aarch64-linux-gnu-gcc \
+	@$(call dl_by_wget,imx_parser_bin,imx_parser.bin)
+	cd $(MMDIR)
+	if [ ! -d "$(MMDIR)"/imx_parser ]; then
+		chmod +x $(FBDIR)/dl/imx_parser.bin
+		$(FBDIR)/dl/imx_parser.bin --auto-accept --force $(LOG_MUTE)
+		mv $(basename $(notdir $(repo_imx_parser_bin_url))) imx_parser
+	fi
+	$(call fbprint_b,"imx_parser")
+	cd imx_parser
+	./configure CC=aarch64-linux-gnu-gcc \
 	   --enable-armv8 \
 	   --disable-static \
-	   --prefix=/usr && \
-	 $(MAKE) -j$(JOBS) && \
-	 $(MAKE) install && \
-	 $(call fbprint_d,"imx_parser")
+	   --prefix=/usr $(LOG_MUTE)
+	$(MAKE) $(LOG_MUTE)
+	$(MAKE) install $(LOG_MUTE)
+	$(call fbprint_d,"imx_parser")

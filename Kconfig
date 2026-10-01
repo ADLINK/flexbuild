@@ -1,0 +1,202 @@
+# Flexbuild Main Configuration
+
+mainmenu "Flexbuild Configuration LSDK System"
+
+choice
+	prompt "Target Platform"
+	default SOC_IMX93FRDM
+	help
+	  Select the target platform family
+
+# Source board configurations
+source "configs/board/Kconfig"
+
+endchoice
+
+
+# Helper symbols (outside choice block to avoid circular dependency)
+config SOC_IMX8
+	bool
+	default y if SOC_IMX8MPEVK || SOC_IMX8MPFRDM || SOC_IMX8MMEVK || SOC_IMX8QMMEK
+
+config SOC_IMX8M
+	bool
+	default y if SOC_IMX8MPEVK || SOC_IMX8MPFRDM || SOC_IMX8MMEVK
+
+config SOC_IMX8MP
+	bool
+	default y if SOC_IMX8MPEVK || SOC_IMX8MPFRDM
+
+config SOC_IMX8QM
+	bool
+	default y if SOC_IMX8QMMEK
+
+config SOC_IMX8MM
+	bool
+	default y if SOC_IMX8MMEVK
+
+config SOC_IMX91
+	bool
+	default y if SOC_IMX91SFRDM || SOC_IMX91FRDM || SOC_IMX91EVK
+
+config SOC_IMX93
+	bool
+	default y if SOC_IMX93FRDM || SOC_IMX93EVK
+
+config SOC_IMX95_15X15
+	bool
+	default y if SOC_IMX95_15X15_FRDM || SOC_IMX95_15X15_EVK
+
+config SOC_IMX95_19X19
+	bool
+	default y if SOC_IMX95_19X19_FRDM_PRO || SOC_IMX95_19X19_EVK
+
+config SOC_IMX95
+	bool
+	default y if SOC_IMX95_15X15 || SOC_IMX95_19X19 || SOC_LEC_IMX95
+
+config SOC_LS104
+    bool
+    default y if SOC_LS1046ARDB || SOC_LS1043ARDB
+
+config PLATFORM_IMX
+    bool
+    default y if SOC_IMX8 || SOC_IMX91 || SOC_IMX93 || SOC_IMX95
+
+config PLATFORM_LS
+    bool
+    default y if SOC_LS1028ARDB || SOC_LS104 || SOC_LX2160ARDB
+
+config MACHINE_NAME
+    string
+    default "imx8mpevk" if SOC_IMX8MPEVK
+    default "imx8mpfrdm" if SOC_IMX8MPFRDM
+    default "imx8mmevk" if SOC_IMX8MMEVK
+    default "imx8qmmek" if SOC_IMX8QMMEK
+    default "imx91evk" if SOC_IMX91EVK
+    default "imx91frdm" if SOC_IMX91FRDM
+    default "imx91sfrdm" if SOC_IMX91SFRDM
+    default "imx93evk" if SOC_IMX93EVK
+    default "imx93frdm" if SOC_IMX93FRDM
+    default "imx95-15x15-evk" if SOC_IMX95_15X15_EVK
+    default "imx95-15x15-frdm" if SOC_IMX95_15X15_FRDM
+    default "lec-imx95" if SOC_LEC_IMX95
+    default "imx95-19x19-evk" if SOC_IMX95_19X19_EVK
+    default "imx95-19x19-frdm-pro" if SOC_IMX95_19X19_FRDM_PRO
+    default "ls1028ardb" if SOC_LS1028ARDB
+    default "ls1043ardb" if SOC_LS1043ARDB
+    default "ls1046ardb" if SOC_LS1046ARDB
+    default "lx2160ardb" if SOC_LX2160ARDB
+
+# ============================================================================
+# Build Configuration Categories
+# ============================================================================
+menu "Build Configuration"
+
+config JOBS
+	int "Parallel build jobs"
+	range 0 24
+	default 0
+	help
+	  Number of parallel make jobs to run.
+	  Default is 0, which means use the number of CPU cores as parallel jobs.
+	  Adjust based on your CPU cores and system resources.
+
+config BUILD_VERBOSE
+	bool "Verbose build output"
+	default n
+	help
+	  Show detailed compilation commands during build
+
+config KEEP_GIT
+	bool "Use git clone to download source code"
+	default n
+	help
+	  If enabled, use git clone to download source code repositories.
+	  If disabled, use direct download (tarball/archive) method instead.
+	  Git clone method keeps the full git history and allows for easier
+	  development and contribution.
+	  Using download method can speed up the build time by avoiding
+	  full git history retrieval.
+
+config OPTEE
+	bool "Enable OPTEE feature"
+	default n
+	help
+	  Use Open Portable Trusted Execution Environment(OPTEE)
+	  designed to run secure code alongside a normal operating system
+
+config SECURE_BOOT
+	bool "Enable secure boot feature"
+	default n
+	depends on PLATFORM_LS
+	help
+	  Enable security feature that ensures only trusted software is
+	  loaded during the device's startup process.
+
+config DEBIAN_MIRRORS
+	string "Debian package mirrors"
+	default "http://deb.debian.org/debian"
+	help
+	  Specify Debian package repository mirrors, separated by spaces.
+	  Multiple mirrors can be provided for redundancy.
+	  Examples:
+	    Single mirror:
+	      http://deb.debian.org/debian
+
+	    Multiple mirrors (China):
+	      http://mirrors.tuna.tsinghua.edu.cn/debian http://mirrors.aliyun.com/debian
+
+	    Multiple mirrors (Global):
+	      http://deb.debian.org/debian http://ftp.debian.org/debian
+
+	  Default: http://deb.debian.org/debian (official CDN, recommended)
+
+config LINUX_EXTRA_CONFIG
+	string "Extra linux kernel configuration"
+	help
+	  Specify custom Linux kernel configuration file(s) to append to the default.
+	  The configuration file(s) must be located in configs/linux/ directory.
+	  For LayerScape platform, default is: defconfig lsdk.config
+	  For i.MX platform, default is: imx_v8_defconfig
+
+config CUSTOM_SDK_CONFIG
+	string "Custom SDK configuration file"
+	help
+	  Specify a custom SDK configuration file to replace the default.
+	  The configuration file(s) must be located in configs/ directory.
+	  The default SDK configuration file is: sdk.yml.
+
+config FUSE_PROVISIONING
+	bool "Enable fuse provisioning"
+	default n
+	depends on PLATFORM_LS
+	help
+	  Provides non-volatile secure storage in form of on-chip fuse memory which some
+	  information can be programmed into fuse memory via Security Fuse Processor (SFP)
+	  designed to run secure code alongside a normal operating system
+
+endmenu # Build Configuration
+
+
+# ============================================================================
+# Application Categories
+# ============================================================================
+menu "NXP Component Selection"
+
+source "src/linux/Kconfig"
+source "src/apps/Kconfig"
+
+endmenu # Component Selection
+
+
+# ============================================================================
+# Rootfs Categories
+# ============================================================================
+#menu "Root Filesystem"
+#
+#config DISTRO_VERSION
+#	string "Distribution version"
+#	default "trixie"
+#
+#endmenu # Root Filesystem

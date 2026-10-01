@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 NXP
+ * Copyright 2018-2025 NXP
  *
  * Shengzhou Liu <Shengzhou.Liu@nxp.com>
  *
@@ -20,8 +20,8 @@
 			arch = "arm64";
 			os = "linux";
 			compression = "gzip";
-			load = <0x80280000>;
-			entry = <0x80280000>;
+			load = <0x94280000>;
+			entry = <0x94280000>;
 		};
 
 		initrd {
@@ -34,19 +34,18 @@
 			entry = <0x00000000>;
 		};
 
-
-		imx8mqevk-dtb {
+		imx8mpevk-dtb {
 			description = "Flattened Device Tree blob";
-			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx8mq-evk.dtb");
+			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx8mp-evk.dtb");
 			type = "flat_dt";
 			arch = "arm64";
 			os = "linux";
 			compression = "none";
 			load = <0x90000000>;
 		};
-		imx8mpevk-dtb {
+		imx8mpfrdm-dtb {
 			description = "Flattened Device Tree blob";
-			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx8mp-evk.dtb");
+			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx8mp-frdm.dtb");
 			type = "flat_dt";
 			arch = "arm64";
 			os = "linux";
@@ -71,27 +70,27 @@
 			compression = "none";
 			load = <0x90000000>;
 		};
-		imx8mnevk-dtb {
+		imx91evk-dtb {
 			description = "Flattened Device Tree blob";
-			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx8mn-evk.dtb");
+			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx91-11x11-evk.dtb");
 			type = "flat_dt";
 			arch = "arm64";
 			os = "linux";
 			compression = "none";
 			load = <0x90000000>;
 		};
-		imx8qxpmek-dtb {
+		imx91frdm-dtb {
 			description = "Flattened Device Tree blob";
-			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx8qxp-mek.dtb");
+			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx91-11x11-frdm.dtb");
 			type = "flat_dt";
 			arch = "arm64";
 			os = "linux";
 			compression = "none";
-			load = <0x83000000>;
+			load = <0x90000000>;
 		};
-		imx8ulpevk-dtb {
+		imx91sfrdm-dtb {
 			description = "Flattened Device Tree blob";
-			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx8ulp-evk.dtb");
+			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx91-11x11-frdm-imx91s.dtb");
 			type = "flat_dt";
 			arch = "arm64";
 			os = "linux";
@@ -107,19 +106,64 @@
 			compression = "none";
 			load = <0x90000000>;
 		};
+		imx93frdm-dtb {
+			description = "Flattened Device Tree blob";
+			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx93-11x11-frdm.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			os = "linux";
+			compression = "none";
+			load = <0x90000000>;
+		};
+		imx95-15x15-evk-dtb {
+			description = "Flattened Device Tree blob";
+			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx95-15x15-evk.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			os = "linux";
+			compression = "none";
+			load = <0x90000000>;
+		};
+		imx95-15x15-frdm-dtb {
+			description = "Flattened Device Tree blob";
+			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx95-15x15-frdm.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			os = "linux";
+			compression = "none";
+			load = <0x90000000>;
+		};
+		imx95-19x19-evk-dtb {
+			description = "Flattened Device Tree blob";
+			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx95-19x19-evk.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			os = "linux";
+			compression = "none";
+			load = <0x90000000>;
+		};
+		imx95-19x19-frdm-pro-dtb {
+			description = "Flattened Device Tree blob";
+			data = /incbin/("../../build/linux/kernel/arm64/IMX/imx95-19x19-frdm-pro.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			os = "linux";
+			compression = "none";
+			load = <0x90000000>;
+		};
 	};
 
 	configurations {
-		imx8mqevk {
-			description = "Boot Linux kernel";
-			kernel = "kernel";
-			fdt = "imx8mqevk-dtb";
-			ramdisk = "initrd";
-		};
 		imx8mpevk {
 			description = "Boot Linux kernel";
 			kernel = "kernel";
 			fdt = "imx8mpevk-dtb";
+			ramdisk = "initrd";
+		};
+		imx8mpfrdm {
+			description = "Boot Linux kernel";
+			kernel = "kernel";
+			fdt = "imx8mpfrdm-dtb";
 			ramdisk = "initrd";
 		};
 		imx8mmevk {
@@ -128,34 +172,64 @@
 			fdt = "imx8mmevk-dtb";
 			ramdisk = "initrd";
 		};
-		imx8mnevk {
-			description = "Boot Linux kernel";
-			kernel = "kernel";
-			fdt = "imx8mnevk-dtb";
-			ramdisk = "initrd";
-		};
 		imx8qmmek {
 			description = "Boot Linux kernel";
 			kernel = "kernel";
 			fdt = "imx8qmmek-dtb";
 			ramdisk = "initrd";
 		};
-		imx8qxpmek {
+		imx91evk {
 			description = "Boot Linux kernel";
 			kernel = "kernel";
-			fdt = "imx8qxpmek-dtb";
+			fdt = "imx91evk-dtb";
 			ramdisk = "initrd";
 		};
-		imx8ulpevk {
+		imx91frdm {
 			description = "Boot Linux kernel";
 			kernel = "kernel";
-			fdt = "imx8ulpevk-dtb";
+			fdt = "imx91frdm-dtb";
+			ramdisk = "initrd";
+		};
+		imx91sfrdm {
+			description = "Boot Linux kernel";
+			kernel = "kernel";
+			fdt = "imx91sfrdm-dtb";
 			ramdisk = "initrd";
 		};
 		imx93evk {
 			description = "Boot Linux kernel";
 			kernel = "kernel";
 			fdt = "imx93evk-dtb";
+			ramdisk = "initrd";
+		};
+		imx93frdm {
+			description = "Boot Linux kernel";
+			kernel = "kernel";
+			fdt = "imx93frdm-dtb";
+			ramdisk = "initrd";
+		};
+		imx95-15x15-evk {
+			description = "Boot Linux kernel";
+			kernel = "kernel";
+			fdt = "imx95-15x15-evk-dtb";
+			ramdisk = "initrd";
+		};
+		imx95-15x15-frdm {
+			description = "Boot Linux kernel";
+			kernel = "kernel";
+			fdt = "imx95-15x15-frdm-dtb";
+			ramdisk = "initrd";
+		};
+		imx95-19x19-evk {
+			description = "Boot Linux kernel";
+			kernel = "kernel";
+			fdt = "imx95-19x19-evk-dtb";
+			ramdisk = "initrd";
+		};
+		imx95-19x19-frdm-pro {
+			description = "Boot Linux kernel";
+			kernel = "kernel";
+			fdt = "imx95-19x19-frdm-pro-dtb";
 			ramdisk = "initrd";
 		};
 	};

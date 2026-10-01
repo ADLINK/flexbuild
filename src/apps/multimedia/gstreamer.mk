@@ -1,4 +1,4 @@
-# Copyright 2021-2024 NXP
+# Copyright 2021-2024,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -14,25 +14,18 @@
 
 
 gstreamer:
-	@[ $(DISTROVARIANT) != desktop -o $(DESTARCH) != arm64 ] && exit || \
-	 $(call fbprint_b,"gstreamer") && \
-	 $(call repo-mngr,fetch,gstreamer,apps/multimedia) && \
-	 if [ ! -d $(RFSDIR)/usr/lib/aarch64-linux-gnu ]; then \
-	     bld rfs -r $(DISTROTYPE):$(DISTROVARIANT) -a $(DESTARCH) -f $(CFGLISTYML); \
-	 fi && \
-	 cd $(MMDIR)/gstreamer && \
-	 if [ ! -f .patchdone ]; then \
-	     git am $(FBDIR)/patch/gstreamer/*.patch && touch .patchdone; \
-	 fi && \
-	 export HAVE_PTP_HELPER_CAPABILITIES=0 && \
-	 if ! grep -q libexecdir= meson.build; then \
-	     sed -i "/pkgconfig_variables =/a\  'libexecdir=\$\{prefix\}/libexec'," meson.build && \
-	     sed -i "/pkgconfig_variables =/a\  'datadir=\$\{prefix\}/share'," meson.build && \
-	     sed -i 's/0.62/0.61/' meson.build; \
-	 fi && \
+	@$(call download_repo,gstreamer,apps/multimedia)
+	 $(call patch_apply,gstreamer,apps/multimedia)
+	 cd $(MMDIR)/gstreamer
+	 $(call fbprint_b,"gstreamer")
+	 export HAVE_PTP_HELPER_CAPABILITIES=0
+	 if ! grep -q libexecdir= meson.build; then
+	     sed -i "/pkgconfig_variables =/a\  'libexecdir=\$\{prefix\}/libexec'," meson.build
+	     sed -i "/pkgconfig_variables =/a\  'datadir=\$\{prefix\}/share'," meson.build
+	 fi
 	 sed -e 's%@TARGET_CROSS@%$(CROSS_COMPILE)%g' -e 's%@STAGING_DIR@%$(RFSDIR)%g' \
-	     -e 's%@DESTDIR@%$(DESTDIR)%g' $(FBDIR)/src/misc/meson/meson.cross > meson.cross && \
-	 \
+	     -e 's%@DESTDIR@%$(DESTDIR)%g' $(FBDIR)/src/system/meson.cross > meson.cross
+	 rm -rf build_$(DISTROTYPE)_$(ARCH)
 	 meson setup build_$(DISTROTYPE)_$(ARCH) \
 		--cross-file meson.cross \
 		-Dc_args="--sysroot=$(RFSDIR) -I$(DESTDIR)/usr/local/include" \
@@ -51,6 +44,6 @@ gstreamer:
 		-Dtests=disabled \
 		-Dtools=enabled \
 		-Dtracer_hooks=true \
-		-Dlibunwind=disabled && \
-	 ninja -j $(JOBS) -C build_$(DISTROTYPE)_$(ARCH) install && \
+		-Dlibunwind=disabled $(LOG_MUTE)
+	 ninja -C build_$(DISTROTYPE)_$(ARCH) install $(LOG_MUTE)
 	 $(call fbprint_d,"gstreamer")

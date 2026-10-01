@@ -1,32 +1,25 @@
-# Copyright 2017-2023 NXP
+# Copyright 2017-2024,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 
 
 
-openssl:
-ifeq ($(CONFIG_OPENSSL),y)
-	@[ $(DISTROVARIANT) = base -o $(DISTROVARIANT) = tiny -o $(DESTARCH) != arm64 ] && exit || \
-	 $(call fbprint_b,"OpenSSL") && \
-	 $(call repo-mngr,fetch,openssl,apps/security) && \
-	 if [ ! -d $(DESTDIR)/usr/local/include/crypto ]; then \
-	     bld cryptodev_linux -a $(DESTARCH) -r $(DISTROTYPE):$(DISTROVARIANT) -p $(SOCFAMILY) -f $(CFGLISTYML); \
-	 fi && \
-	 cd $(SECDIR)/openssl && \
-	 if [ ! -f .patchdone ]; then \
-	    git am $(FBDIR)/patch/openssl/*.patch && touch .patchdone; \
-	 fi && \
+openssl: cryptodev_linux
+	 @$(call download_repo,openssl,apps/security,submod)
+	 $(call patch_apply,openssl,apps/security)
+	 $(call fbprint_b,"OpenSSL")
+	 cd $(SECDIR)/openssl
 	 ./Configure enable-devcryptoeng linux-aarch64 shared \
 		     -I$(DESTDIR)/usr/include -I$(PKGDIR)/linux/cryptodev_linux \
 		     --prefix=/usr \
-		     --openssldir=lib/ssl && \
-	 $(MAKE) -j$(JOBS) depend && \
-	 $(MAKE) -j$(JOBS) 1>/dev/null && \
-	 $(MAKE) -j$(JOBS) install DESTDIR=$(DESTDIR) MANSUFFIX=ssl 1>/dev/null && \
-	 rm -fr $(DESTDIR)/usr/lib/ssl/{certs,openssl.cnf,private} && \
-	 ln -s /etc/ssl/certs $(DESTDIR)/usr/lib/ssl/certs && \
-	 ln -s /etc/ssl/private $(DESTDIR)/usr/lib/ssl/private && \
-	 ln -s /etc/ssl/openssl.cnf $(DESTDIR)/usr/lib/ssl/openssl.cnf && \
+		     --openssldir=lib/ssl $(LOG_MUTE)
+	 $(MAKE) depend $(LOG_MUTE)
+	 $(MAKE) $(LOG_MUTE)
+	 $(MAKE) install DESTDIR=$(DESTDIR) MANSUFFIX=ssl $(LOG_MUTE)
+	 mkdir -p $(DESTDIR)/usr/local/bin
+	 mv $(DESTDIR)/usr/bin/openssl $(DESTDIR)/usr/local/bin
+	 rm -rf $(DESTDIR)/usr/lib/ssl/certs
+	 rm -rf $(DESTDIR)/usr/lib/ssl/private
+	 ln -sf engines-3/devcrypto.so $(DESTDIR)/usr/lib/libcryptodev.so
 	 $(call fbprint_d,"OpenSSL")
-endif

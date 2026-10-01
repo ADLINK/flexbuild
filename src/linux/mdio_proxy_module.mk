@@ -1,21 +1,16 @@
-# Copyright 2021-2023 NXP
+# Copyright 2021-2023,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 
 
-mdio_proxy_module:
-	@[ $(SOCFAMILY) != LS ] && exit || true && \
-	 $(call repo-mngr,fetch,mdio_proxy_module,linux) && \
-	 $(call repo-mngr,fetch,$(KERNEL_TREE),linux) && \
-	 if [ ! -d $(FBOUTDIR)/linux/kernel/$(DESTARCH)/$(SOCFAMILY) ]; then \
-	     bld linux -a $(DESTARCH) -p $(SOCFAMILY) -f $(CFGLISTYML); \
-	 fi && \
-	 curbrch=`cd $(KERNEL_PATH) && git branch | grep ^* | cut -d' ' -f2` && \
-	 opdir=$(KERNEL_OUTPUT_PATH)/$$curbrch && mkdir -p $$opdir && \
-	 \
-	 cd $(PKGDIR)/linux/mdio_proxy_module && \
-	 $(call fbprint_b,"mdio-proxy-module") && \
-	 $(MAKE) -j$(JOBS) KBUILD_DIR=$(KERNEL_PATH) O=$$opdir && \
-	 cp -f mdio-proxy.ko $$opdir/tmp/lib/modules/*/kernel/drivers/net/mdio/ && \
-	 $(call fbprint_d,"mdio_proxy_module")
+mdio_proxy_module: $(KERNEL_IMAGE)
+	@$(call download_repo,mdio_proxy_module,linux)
+	$(call patch_apply,mdio_proxy_module,linux)
+	$(call fbprint_b,"mdio-proxy-module")
+	cd $(PKGDIR)/linux/mdio_proxy_module
+	krelease=$$(cat "$(KOUTDIR)/include/config/kernel.release" 2>/dev/null)
+	$(MAKE) KBUILD_DIR=$(KERNEL_PATH) O=$(KOUTDIR) $(LOG_MUTE)
+	mkdir -p $(DESTDIR)/lib/modules/"$$krelease"/kernel/drivers/net/mdio
+	cp -f mdio-proxy.ko $(DESTDIR)/lib/modules/"$$krelease"/kernel/drivers/net/mdio/
+	$(call fbprint_d,"mdio_proxy_module")

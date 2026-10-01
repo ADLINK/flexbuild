@@ -1,13 +1,15 @@
-# Copyright 2021-2023 NXP
+# Copyright 2021-2023,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
 # a utility to program Aquantia PHY firmware
 
 aquantia_fw_util:
-	@[ $(DESTARCH) != arm64 -o $(SOCFAMILY) != LS -o $(DISTROVARIANT) = tiny -o $(DISTROVARIANT) = base ] && exit || \
-	 $(call repo-mngr,fetch,aquantia_fw_util,apps/networking) && \
-	 cd $(NETDIR)/aquantia_fw_util && \
-	 $(MAKE) -j$(JOBS) && \
-	 cp -f aq-firmware-tool $(DESTDIR)/usr/local/bin && \
+	@$(call download_repo,aquantia_fw_util,apps/networking)
+	 $(call patch_apply,aquantia_fw_util,apps/networking)
+	 $(call fbprint_b,"aquantia_fw_util")
+	 cd $(NETDIR)/aquantia_fw_util
+	 $(MAKE) $(LOG_MUTE)
+	 mkdir -p $(DESTDIR)/usr/local/bin
+	 cp -f aq-firmware-tool $(DESTDIR)/usr/local/bin
 	 $(call fbprint_d,"aquantia_fw_util")

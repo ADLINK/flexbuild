@@ -4,8 +4,11 @@ build_lsdk*
 logs
 uuu
 configs/.sdk.cfg
-tools/bld
+configs/.repo_pool
+dl
+tmp
 .bash*
+.config*
 *.tgz
 *.tar.zst
 *.log

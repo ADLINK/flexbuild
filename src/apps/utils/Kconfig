@@ -1,0 +1,62 @@
+# ============================================================================
+# Utility Configuration
+# ============================================================================
+
+config APP_UTILS
+	bool "Firmware, mcore demos and others"
+	default y
+	help
+	  Build Firmware, mcore demos and wireless firmware etc.
+
+if APP_UTILS
+
+
+if PLATFORM_IMX
+
+config UTILS_FIRMWARED
+	bool "Firmware loading daemon"
+	default y
+	help
+	  Firmware loading daemon for system devices, like ap1302 camera
+
+config UTILS_IMX_FIRMWARE
+	bool "NXP WIFI module firmware"
+	default y
+	help
+	  NXP WIFI module, like IW612, SD8997 etc, firmware
+
+config UTILS_IMX_TEST
+	bool "i.MX test utilities"
+	default n
+	depends on SOC_IMX8
+	help
+	  Test utilities and unit tests for i.MX platforms
+
+config UTILS_MCORE_DEMO
+	bool "M-core demo applications"
+	default y
+	help
+	  Demo applications for i.MX M-core (Cortex-M) processors
+
+config UTILS_WIRELESS_REGDB
+	bool "Wireless regulatory database"
+	default y
+	help
+	  Wireless regulatory database for WiFi compliance
+
+endif # PLATFORM_IMX
+
+config UTILS_FIRMWARE_IMX
+	bool "i.MX system firmware package"
+	default y
+	depends on PLATFORM_IMX || SOC_LS1028ARDB
+	help
+	  Firmware binaries for i.MX platforms (HDMI, VPU, etc.)
+
+config UTILS_PERF
+    bool "Kernel perf tool"
+    default y
+    help
+      This enables the 'perf' user-space tool for performance analysis.
+
+endif # APP_UTILS

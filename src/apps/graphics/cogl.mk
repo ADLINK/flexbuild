@@ -1,4 +1,4 @@
-# Copyright 2023 NXP
+# Copyright 2023,2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -8,29 +8,44 @@
 
 # clutter-1.0 depends on cogl-1.0
 
-cogl:
-	@[ $(DESTARCH) != arm64 -o $(DISTROVARIANT) != desktop ] && exit || \
-	 $(call fbprint_b,"cogl") && \
-	 $(call repo-mngr,fetch,cogl,apps/graphics) && \
-	 cd $(GRAPHICSDIR)/cogl && \
-	 if [ ! -f $(DESTDIR)/usr/lib/libGLESv2.so ]; then \
-	     bld gpu_viv -r $(DISTROTYPE):$(DISTROVARIANT) -f $(CFGLISTYML); \
-	 fi && \
-	 if [ ! -f .patchdone ]; then \
-	    git am $(FBDIR)/patch/cogl/*.patch && touch .patchdone; \
-	 fi && \
-	 export CROSS=$(CROSS_COMPILE) && \
-	 export CC="$(CROSS_COMPILE)gcc --sysroot=$(RFSDIR)  \
-		 -march=armv8-a+crc+crypto -mbranch-protection=standard -O2 \
-		 -fstack-protector-strong -D_FORTIFY_SOURCE=2 -Wformat \
-		 -Wformat-security -Werror=format-security -Wno-error=maybe-uninitialized" && \
-	 export CFLAGS="-I$(DESTDIR)/usr/include/libdrm -I$(DESTDIR)/usr/include -I$(RFSDIR)/usr/include" && \
-	 export LDFLAGS="-L$(DESTDIR)/usr/lib -L$(RFSDIR)/usr/lib/aarch64-linux-gnu" && \
-	 sudo cp $(DESTDIR)/usr/lib/{libVSC.so,libgbm_viv.so,libGLESv2.so*} $(RFSDIR)/usr/lib && \
-	 \
-	 ./autogen.sh --prefix=/usr --host=aarch64-linux-gnu && \
-	 ./configure CC="$(CROSS_COMPILE)gcc --sysroot=$(RFSDIR)" \
+ifeq ($(CONFIG_SOC_IMX95),y)
+  DEP_COGL = mali_imx
+  DEP_COGL_LDFLAGS = -lmali -lEGL -lGLESv2 -lgbm
+else
+  DEP_COGL = gpu_viv
+  DEP_COGL_LDFLAGS = -lGAL -lVSC -lGLESv2 -lgbm_viv
+endif
+
+
+COGL_SRCDIR := $(GRAPHICSDIR)/cogl
+COGL_SNAME := $(if $(CONFIG_SOC_IMX95),imx95,imx8)
+COGL_BUILDDIR := $(COGL_SRCDIR)/build/cogl-$(COGL_SNAME)
+
+
+#cogl:
+cogl: $(DEP_COGL) libdrm wayland_protocols
+	@$(call download_repo,cogl,apps/graphics,submod)
+	 $(call patch_apply,cogl,apps/graphics)
+	 $(call fbprint_b,"cogl")
+	 rm -rf $(COGL_BUILDDIR)
+	 mkdir -p $(COGL_BUILDDIR)
+	 cd $(COGL_BUILDDIR)
+	 export CROSS=$(CROSS_COMPILE)
+	 export CC="$(CROSS_COMPILE)gcc --sysroot=$(RFSDIR)"
+	 export CFLAGS="--sysroot=$(RFSDIR) \
+		-march=armv8-a+crc+crypto -mbranch-protection=standard -O2 \
+		-fstack-protector-strong -D_FORTIFY_SOURCE=2 -Wformat \
+		-Wformat-security -Werror=format-security -Wno-error=maybe-uninitialized \
+		-Wno-error=deprecated-declarations -Wno-deprecated-declarations \
+		-I$(DESTDIR)/usr/include/libdrm -I$(RFSDIR)/usr/include"
+	 export LDFLAGS="--sysroot=$(RFSDIR) -L$(DESTDIR)/usr/lib -L$(RFSDIR)/usr/lib/aarch64-linux-gnu $(DEP_COGL_LDFLAGS)"
+	 export PKG_CONFIG_SYSROOT_DIR=$(RFSDIR)
+	 export PKG_CONFIG_LIBDIR=$(RFSDIR)/usr/lib/pkgconfig:$(RFSDIR)/usr/lib/aarch64-linux-gnu/pkgconfig
+	 export NOCONFIGURE=1
+	 $(COGL_SRCDIR)/autogen.sh --prefix=/usr --host=aarch64-linux-gnu $(LOG_MUTE)
+	 $(COGL_SRCDIR)/configure \
 	 	--host=aarch64-linux-gnu \
+		--build=x86_64-linux-gnu \
 		--prefix=/usr \
 		--disable-silent-rules \
 		--disable-dependency-tracking \
@@ -48,9 +63,9 @@ cogl:
 		--disable-static \
 		--enable-gles2 \
 		--enable-gl \
-		--enable-glx \
 		--enable-wayland-egl-server \
-		--enable-nls && \
-	 $(MAKE) -j$(JOBS) && \
-	 $(MAKE) install && \
+		--enable-nls $(LOG_MUTE)
+	 sync
+	 $(MAKE) $(LOG_MUTE)
+	 $(MAKE) install $(LOG_MUTE)
 	 $(call fbprint_d,"cogl")

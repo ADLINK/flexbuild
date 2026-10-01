@@ -1,5 +1,6 @@
+
 #
-# Copyright 2017-2023 NXP
+# Copyright 2026 NXP
 #
 # SPDX-License-Identifier: BSD-3-Clause
 #
@@ -7,32 +8,42 @@
 # SDK Application Components
 #
 
-SHELL=/bin/bash
-include $(FBDIR)/configs/$(CONFIGLIST)
-include $(FBDIR)/include/repo.mk
+
+# ============================================================================
+# Main apps target - aggregate all enabled modules
+# ============================================================================
+
 
 
 GRAPHICSDIR = $(PKGDIR)/apps/graphics
-CONNDIR = $(PKGDIR)/apps/connectivity
 MMDIR = $(PKGDIR)/apps/multimedia
 NETDIR = $(PKGDIR)/apps/networking
 SECDIR = $(PKGDIR)/apps/security
 UTILSDIR = $(PKGDIR)/apps/utils
 MLDIR = $(PKGDIR)/apps/ml
+GPDIR = $(PKGDIR)/apps/gopoint
+ROBOTDIR = $(PKGDIR)/apps/robotics
 
 
-all: $(APPS_REPO_LIST)
+include src/apps/graphics/Makefile
+include src/apps/multimedia/Makefile
+include src/apps/networking/Makefile
+include src/apps/ml/Makefile
+include src/apps/gopoint/Makefile
+include src/apps/security/Makefile
+include src/apps/utils/Makefile
+include src/apps/robotics/Makefile
+
+.PHONY: prepare-app-dirs
+prepare-app-dirs:
+	@mkdir -p $(DESTDIR)/{etc,opt} 2>/dev/null || true
+	@mkdir -p $(DESTDIR)/usr/{lib,bin,include} 2>/dev/null || true
+	@mkdir -p $(DESTDIR)/usr/local/{lib,bin,include} 2>/dev/null || true
+
+ALL_APPS := $(APPS_GFX) $(APPS_MM) $(APPS_GP) $(APPS_UTILS) $(APPS_ML) $(APPS_SEC) $(APPS_NET) $(APPS_ROTOTICS)
+ALL_MODULES := $(GP_MODULES) $(GFX_MODULES) $(ML_MODULES) $(MM_MODULES) $(NET_MODULES) $(ROBOTICS_MODULES) $(SEC_MODULES) $(UTILS_MODULES)
+
+$(ALL_APPS): $(KHEADER_FILE) $(KERNEL_IMAGE) $(RFS_FILE) prepare-app-dirs
+.PHONY: apps
+apps: multimedia graphics networking security ml gopoint utils robotics
 	@$(call fbprint_d,"apps components")
-
-
-connectivity: $(CONNECTIVITY_REPO_LIST)
-networking:   $(NETWORKING_REPO_LIST)
-multimedia:   $(MULTIMEDIA_REPO_LIST)
-graphics:     $(GRAPHICS_REPO_LIST)
-security:     $(SECURITY_REPO_LIST)
-utils:        $(UTILS_REPO_LIST)
-ml:	      $(ML_REPO_LIST)
-
-
-include $(sort $(wildcard $(FBDIR)/src/apps/*/*.mk))
-include $(FBDIR)/include/repo_update.inc
