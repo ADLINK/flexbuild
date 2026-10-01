@@ -1,0 +1,104 @@
+From 41e017c692409f5181505204aac431c63018c342 Mon Sep 17 00:00:00 2001
+From: NXP debian <debian@nxp.com>
+Date: Thu, 17 Sep 2026 19:32:51 +0530
+Subject: [PATCH] Added sku based ddr size detection in spl
+
+---
+ common/spl/spl_mmc.c | 74 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 74 insertions(+)
+
+diff --git a/common/spl/spl_mmc.c b/common/spl/spl_mmc.c
+index bd2985c2..a132ede9 100644
+--- a/common/spl/spl_mmc.c
++++ b/common/spl/spl_mmc.c
+@@ -17,13 +17,87 @@
+ #include <image.h>
+ #include <imx_container.h>
+ 
++
++#if 0
+ ulong h_spl_load_read(struct spl_load_info *load, ulong off,
+ 			     ulong size, void *buf)
++#else
++ulong __weak h_spl_load_read(struct spl_load_info *load, ulong off,
++			     ulong size, void *buf)
++#endif				 
+ {
+ 	struct blk_desc *bd = load->priv;
+ 	lbaint_t sector = off >> bd->log2blksz;
+ 	lbaint_t count = size >> bd->log2blksz;
++#if 0	
++	ulong trampoline_sz = SZ_16M;
++	ulong read_count, trampoline_cnt = trampoline_sz >> bd->log2blksz, actual, total;
++#ifdef CONFIG_TARGET_LEC_IMX95
++	void *trampoline;
++	ulong ns_ddr_end;
++	ulong sku_cfg;
++
++#ifdef CONFIG_SKUGPIO
++	sku_cfg = ((readl(GPIO5_BASE_ADDR + PDIR) & 0x70)>>4); //GPIO5_IO_BIT(4~6)
++#endif
++#ifdef CONFIG_SKUADC
++	sku_cfg = sku_adc();
++#endif
+ 
++    if(sku_cfg==SKU_CFG_DDR_2G) //LEC-iMX95 2GB_MT62F1G16D1DS-023 2GB
++    {
++            phys_sdram_size = 0x70000000;           //2GB  - 256MB DDR
++            phys_sdram_2_size = 0;          //0GB
++    }
++    else if(sku_cfg==SKU_CFG_DDR_4G) //LEC-iMX95 MT62F1G32D2DS-023 IT:C 4GB
++    {
++        phys_sdram_size = 0x70000000;           //2GB  - 256MB DDR
++        phys_sdram_2_size = 0x80000000;         //2GB
++    }
++    else if(sku_cfg==SKU_CFG_DDR_8G) //LEC-iMX95 8GB_MT62F2G32D4DS-023 8GB
++    {
++        phys_sdram_size = 0x70000000;           //2GB  - 256MB DDR
++        phys_sdram_2_size = 0x180000000;        //6GB
++    }
++    else if(sku_cfg==SKU_CFG_DDR_16G) //LEC-iMX95 16G_MT62F4G32D8DV-023 16GB
++    {
++        phys_sdram_size = 0x70000000;           //2GB  - 256MB DDR
++        phys_sdram_2_size = 0x380000000;        //14GB
++    }
++    trampoline = (void *)((ulong)CFG_SYS_SDRAM_BASE + phys_sdram_size - trampoline_sz);
++    ns_ddr_end = CFG_SYS_SDRAM_BASE + phys_sdram_size;
++#else
++    void *trampoline = (void *)((ulong)CFG_SYS_SDRAM_BASE + PHYS_SDRAM_SIZE - trampoline_sz);
++    ulong ns_ddr_end = CFG_SYS_SDRAM_BASE + PHYS_SDRAM_SIZE;
++#endif
++#ifdef PHYS_SDRAM_2_SIZE
++#ifdef CONFIG_TARGET_LEC_IMX95
++	ns_ddr_end += phys_sdram_2_size;
++#else
++	ns_ddr_end += PHYS_SDRAM_2_SIZE;
++#endif
++#endif
++
++	/* Check if the buf is in non-secure world, otherwise copy from trampoline */
++	if ((ulong)buf < CFG_SYS_SDRAM_BASE || (ulong)buf + (count << bd->log2blksz) > ns_ddr_end) {
++		total = 0;
++		while (count) {
++			read_count = trampoline_cnt > count ? count : trampoline_cnt;
++			actual = blk_dread(bd, sector, read_count, trampoline);
++			if (actual != read_count) {
++				printf("Error in blk_dread, %lu, %lu\n", read_count, actual);
++				return 0;
++			}
++			memcpy(buf, trampoline, actual * 512);
++			buf += actual * 512;
++			sector += actual;
++			total += actual;
++			count -= actual;
++		}
++
++		return total << bd->log2blksz;
++	}
++#endif
+ 	return blk_dread(bd, sector, count, buf) << bd->log2blksz;
+ }
+ 
+-- 
+2.47.3
+
