@@ -7,8 +7,7 @@
 # SDK linux kernel and modules components
 
 
-DTBSTR := $(if $(filter y,$(CONFIG_PLATFORM_IMX)),imx*.dtb,fsl*.dtb)
-
+DTBSTR := $(if $(filter y,$(CONFIG_SOC_LEC_IMX95)),lec*.dtb,$(if $(filter y,$(CONFIG_PLATFORM_IMX)),imx*.dtb,fsl*.dtb))
 LINUX_MODULES := \
     cryptodev_linux \
     isp_vvcam_module \

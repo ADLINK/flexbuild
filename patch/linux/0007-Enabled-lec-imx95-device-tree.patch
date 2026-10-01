@@ -1,0 +1,50 @@
+From 385842b7b533837ce5a95c17535d79b7426b80a5 Mon Sep 17 00:00:00 2001
+From: Aravindlal <aravindlal.mh@adlinktech.com>
+Date: Fri, 18 Sep 2026 14:17:48 +0530
+Subject: [PATCH] Enabled-lec-imx95-device-tree
+
+---
+ linux/arch/arm64/boot/dts/Makefile        |  1 +
+ linux/arch/arm64/boot/dts/adlink/Makefile | 21 +++++++++++++++++++++
+ 2 files changed, 22 insertions(+)
+ create mode 100644 linux/arch/arm64/boot/dts/adlink/Makefile
+
+diff --git a/arch/arm64/boot/dts/Makefile b/arch/arm64/boot/dts/Makefile
+index 21cd3a87f..e8a863f49 100644
+--- a/arch/arm64/boot/dts/Makefile
++++ b/arch/arm64/boot/dts/Makefile
+@@ -34,3 +34,4 @@ subdir-y += tesla
+ subdir-y += ti
+ subdir-y += toshiba
+ subdir-y += xilinx
++subdir-y += adlink 
+diff --git a/arch/arm64/boot/dts/adlink/Makefile b/arch/arm64/boot/dts/adlink/Makefile
+new file mode 100644
+index 000000000..13d8305b1
+--- /dev/null
++++ b/arch/arm64/boot/dts/adlink/Makefile
+@@ -0,0 +1,21 @@
++# SPDX-License-Identifier: GPL-2.0
++dtb-$(CONFIG_ARCH_MXC) += lec-imx95.dtb
++
++dtb-$(CONFIG_ARCH_MXC) += lec-imx95-lt9611.dtb
++dtb-$(CONFIG_ARCH_MXC) += lec-imx95-lt96114k.dtb
++
++dtb-$(CONFIG_ARCH_MXC) += lec-imx95-g080uan02.dtb
++
++dtb-$(CONFIG_ARCH_MXC) += lec-imx95-g156hat02.6.dtb
++dtb-$(CONFIG_ARCH_MXC) += lec-imx95-ov13855.dtb
++dtb-$(CONFIG_ARCH_MXC) += lec-imx95-ov5640.dtb
++dtb-$(CONFIG_ARCH_MXC) += lec-imx95-cameras-lvds.dtb
++
++dtb-$(CONFIG_ARCH_MXC) += lec-imx95-lt9611-pcie8997.dtb
++dtb-$(CONFIG_ARCH_MXC) += lec-imx95-ov13855-lvds.dtb
++
++dtb-$(CONFIG_ARCH_MXC) += lec-imx95-lt9611-noconsole.dtb
++dtb-$(CONFIG_ARCH_MXC) += lec-imx95-lt9611-uart2.dtb
++dtb-$(CONFIG_ARCH_MXC) += lec-imx95-lt9611-spi7.dtb
++
++dtb-$(CONFIG_ARCH_MXC) += lec-imx95-lt9611-usbclient.dtb
+-- 
+2.47.3
+
