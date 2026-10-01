@@ -114,7 +114,7 @@ define build_soc_recipe
 	cp -f $(UTILSDIR)/firmware_imx/firmware/ddr/synopsys/*.bin $(IMX95DIR)/
 	cp -f $(BSPDIR)/fw_ele/mx95b0-ahab-container.img $(IMX95DIR)/
 	cp -f $(BSPDIR)/atf/build/imx95/release/bl31.bin $(IMX95DIR)/
-	cp -f $(BSPDIR)/imx_sm/build/mx95evk/m33_image.bin $(IMX95DIR)/
+	cp -f $(BSPDIR)/imx_sm/build/mx95lec/m33_image.bin $(IMX95DIR)/
 	cp -f $(UBOOT_OUT_DIR)/spl/u-boot-spl.bin $(UBOOT_OUT_DIR)/u-boot.bin $(IMX95DIR)/
 	$(if $(CONFIG_OPTEE),cp -f $(BL32_BIN) $(IMX95DIR)/tee.bin)
 
@@ -128,6 +128,12 @@ define build_soc_recipe
 		cp -f $(BSPDIR)/imx_oei/build/mx95lp5/ddr/oei-m33-ddr.bin $(IMX95DIR)/; \
 		cp -f $(UTILSDIR)/mcore_demo/imx95-m7-demo/imx95-19x19-evk_m7_TCM_power_mode_switch.bin $(IMX95DIR)/m7_image.bin; \
 		cd $(IMX_MKIMAGE_DIR) && $(MAKE) SOC=iMX95 REV=B0 OEI=YES flash_all $(LOG_MUTE); \
+	)
+	$(if $(CONFIG_SOC_LEC_IMX95), \
+    		cp -f $(BSPDIR)/imx_oei/build/mx95lp5/ddr/oei-m33-ddr.bin $(IMX95DIR)/oei-m33-ddr.bin; \
+    		cp -f $(BSPDIR)/imx_oei/build/mx95lp5/ddr/oei-m33-ddr.bin $(IMX95DIR)/oei-m33-tcm.bin; \
+    		cp -f $(BSPDIR)/imx_oei/build/mx95lp5/ddr/oei-m33-ddr.bin $(IMX95DIR)/m7_image.bin; \
+    		cd $(IMX_MKIMAGE_DIR) && $(MAKE) SOC=iMX95 REV=B0 OEI=YES flash_all $(LOG_MUTE); \
 	)
 	cp -f $(IMX95DIR)/flash.bin $(FBOUTDIR)/images/$(MACHINE)-sd-flash.bin
 endef
