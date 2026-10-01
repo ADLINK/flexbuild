@@ -131,7 +131,7 @@ EOF
 }
 
 ls_machine_list=' ls1028ardb ls1043ardb ls1046ardb lx2160ardb la1224rdb '
-imx_machine_list=' imx8mmevk imx8mpevk imx8mpfrdm imx8qmmek imx91evk imx91frdm imx91sfrdm imx93evk imx93frdm imx95-15x15-frdm imx95-15x15-evk imx95-19x19-frdm-pro imx95-19x19-evk '
+imx_machine_list=' lec-imx95 imx8mmevk imx8mpevk imx8mpfrdm imx8qmmek imx91evk imx91frdm imx91sfrdm imx93evk imx93frdm imx95-15x15-frdm imx95-15x15-evk imx95-19x19-frdm-pro imx95-19x19-evk '
 
 get_linux_version() {
     local distro_ver=$1
@@ -439,6 +439,8 @@ flex_install_distro() {
                 prefix_to_keep="${machine:0:6}" ;;
             imx9*)
                 prefix_to_keep="${machine:0:5}" ;;
+	    lec-imx95)
+                prefix_to_keep="lec-imx95" ;;
             lx*|ls*|la*)
                 prefix_to_keep="fsl-${machine:0:6}" ;;
             *)

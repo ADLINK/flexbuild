@@ -69,7 +69,7 @@ IMX_MACHINES = [
     "imx91evk", "imx91frdm", "imx91sfrdm",
     "imx93evk", "imx93frdm",
     "imx95-15x15-frdm", "imx95-15x15-evk",
-    "imx95-19x19-frdm-pro", "imx95-19x19-evk",
+    "imx95-19x19-frdm-pro", "imx95-19x19-evk","lec-imx95",
 ]
 
 ALL_MACHINES = LS_MACHINES + IMX_MACHINES
@@ -86,6 +86,7 @@ FIRMWARE_OFFSET_MAP = [
     ("imx91",  32 * KiB),
     ("imx93",  32 * KiB),
     ("imx95",  32 * KiB),
+    ("lec-imx95",  32 * KiB),
     ("imx9",   32 * KiB),
     ("imx6",   1  * KiB),
     ("imx7",   1  * KiB),
