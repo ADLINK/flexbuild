@@ -128,6 +128,23 @@ case "${board_id}" in
         safe_run systemctl disable gdm --now
         safe_run systemctl enable weston
         ;;
+    lec-imx95*)
+        safe_run sed -i "s/.*pam_nologin.*/auth    requisite       pam_nologin.so nullok/" /etc/pam.d/gdm-password
+        safe_run sed -e  's/.*AutomaticLoginEnable.*/AutomaticLoginEnable = true/'  -e '0,/user1/s/.*user1.*/AutomaticLogin = debian/'  -i /etc/gdm3/daemon.conf
+        safe_run grep -q 'WantedBy=graphical.target' /lib/systemd/system/gdm.service || \
+            sed -i '$a\[Install]\nWantedBy=graphical.target' /lib/systemd/system/gdm.service
+        safe_run ln -sf /lib/systemd/system/gdm.service /etc/systemd/system/graphical.target.wants/gdm.service
+
+        safe_run ln -sf weston.ini.imx95 /etc/xdg/weston/weston.ini
+        if [ -f /lib/aarch64-linux-gnu/libmutter-16.so.0.0.0 ]; then
+            safe_run /usr/bin/patchelf --replace-needed libGL.so.1 libGLESv2.so.2 /lib/aarch64-linux-gnu/libmutter-16.so.0.0.0
+        fi
+        sed -i 's|^Exec=.*|Exec=/usr/lib/chromium/chromium --ozone-platform=wayland --password-store=basic %U|' \
+            /usr/share/applications/chromium.desktop
+        /usr/bin/update-desktop-database
+        safe_run systemctl disable gdm --now
+        safe_run systemctl enable weston
+        ;;
     ls1028a*)
         safe_run ln -sf weston.ini.ls1028 /etc/xdg/weston/weston.ini
         safe_run rm -rf /etc/systemd/system/display-manager.service
