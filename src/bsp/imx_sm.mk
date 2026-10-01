@@ -17,6 +17,6 @@ imx_sm:
 	$(call patch_apply,imx_sm,bsp)
 	$(call fbprint_b,"imx_sm")
 	export PATH=/usr/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi/bin:$(PATH)
-	$(MAKE) V=1 SM_CROSS_COMPILE=arm-none-eabi- config=mx95evk -C $(BSPDIR)/imx_sm clean $(LOG_MUTE)
-	$(MAKE) V=1 SM_CROSS_COMPILE=arm-none-eabi- config=mx95evk M=2 -C $(BSPDIR)/imx_sm $(LOG_MUTE)
+	$(MAKE) V=1 SM_CROSS_COMPILE=arm-none-eabi- config=mx95lec -C $(BSPDIR)/imx_sm clean $(LOG_MUTE)
+	$(MAKE) V=1 SM_CROSS_COMPILE=arm-none-eabi- config=mx95lec M=2 -C $(BSPDIR)/imx_sm $(LOG_MUTE)
 	$(call fbprint_d,"imx_sm")
